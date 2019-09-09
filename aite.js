@@ -34,8 +34,6 @@ async function autoCheckGrade(){
 		var attempts = 0;
 		var checkBox = $('input#done');
 		while(checkBox.length == 0 && attempts ++ < 100){
-
-			console.log('check');
 			await timeout(30);
 			checkBox = $('input#done');
 		}
@@ -56,8 +54,6 @@ async function async_refresh2(){
 		if(old_name != new_name) 
 			break;
 	}
-	console.log(old_name);
-	console.log(new_name);
 	await refreshStudents(studentList);
 }
 async function async_refresh(){
@@ -168,9 +164,6 @@ $( document ).ready(function() {
 						});
 						$( document ).on( "click", "input.icon", function() {
 						  async_refresh2();
-						});
-						$( document ).on( "change", "tbody", function() {
-							console.log('hey');
 						});
 						$( document ).on( "change", "table", function() {
 							async_refresh();
