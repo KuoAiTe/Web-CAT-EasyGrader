@@ -44,7 +44,24 @@ async function autoCheckGrade(){
 			checkBox.click();
 	}
 }
+async function async_refresh2(){
+	var studentList = getStudentList();
+	var old_name = studentList[0].innerText;
+	var new_name = old_name;
+	var attempts = 0;
+	while(attempts ++ < 100){
+		await timeout(30);
+		studentList = getStudentList();
+		new_name = studentList[0].innerText;
+		if(old_name != new_name) 
+			break;
+	}
+	console.log(old_name);
+	console.log(new_name);
+	await refreshStudents(studentList);
+}
 async function async_refresh(){
+	await timeout(100);
 	studentList = getStudentList();
 	var attempts = 0;
 	if(studentList){
@@ -65,7 +82,7 @@ async function refreshStudents(studentList){
 			tr = studentList[i];
 			student_info = tr.getElementsByTagName("td");
 			if(student_info.length > 2) {
-				td_student_dom = student_info[1]
+				td_student_dom = student_info[1];
 				td_student_name = td_student_dom.innerText;
 				if(lock) lockClass = 'locked';
 				if(isStudentInSection(getStudentName(td_student_name)))
@@ -102,7 +119,6 @@ function handleStudent(student){
 	  }, function() {
 	  	student.removeClass('inSection').removeClass('outSection').addClass(classAssigned);
 	  });
-		console.log(studentInSection);
 	}
 }
 $( document ).ready(function() {
@@ -111,9 +127,7 @@ $( document ).ready(function() {
 		showUI: true,
 		disable: false
 		}, function(items){
-			console.log(items);
 			showUI = items.showUI;
-			console.log("showshow"+showUI);
 			disable = items.disable;
 			if(!disable){
 				var title = document.title;
@@ -149,6 +163,15 @@ $( document ).ready(function() {
 						$( document ).on( "click", "span.outSection", function() {
 						  handleStudent($(this));
 						});
+						$( document ).on( "click", "a.active", function() {
+						  async_refresh2();
+						});
+						$( document ).on( "click", "input.icon", function() {
+						  async_refresh2();
+						});
+						$( document ).on( "change", "tbody", function() {
+							console.log('hey');
+						});
 						$( document ).on( "change", "table", function() {
 							async_refresh();
 						});
@@ -164,8 +187,6 @@ $( document ).ready(function() {
 								var temp = items.studentInSection;
 								for ( var i = 0; i < temp.length; i++)
 									studentInSection.add(temp[i]);
-						  	console.log("student In Section");
-						  	console.log(studentInSection);
 						  	async_refresh();
 
 						});
