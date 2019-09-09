@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Web-CAT Easy Grader",
+  "version": "0.1",
+
+  // Recommended
+  "description": "Drastically reduce your grading time in Web-CAT :)",
+  "icons": {
+    "16": "icon_16.png",
+    "32": "icon_32.png",
+    "48": "icon_48.png",
+    "128": "icon_128.png"
+    },
+  "author": "Ai-Te Kuo",
+  "browser_action": {
+      "default_popup": "popup.html"
+  },
+  "permissions": [
+        "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://webcat.eng.auburn.edu:8443/Web-CAT/WebObjects/Web-CAT.woa/wo/*"
+      ],
+      "js": ["jquery-3.4.1.min.js","aite.js"],
+      "css": ["aite.css"],
+      "run_at": "document_start"
+    }
+  ]
+}

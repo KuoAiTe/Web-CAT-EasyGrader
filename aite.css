@@ -1,0 +1,28 @@
+.fliter{
+  background-color: #0275d8;
+
+}
+.edit{
+	background-color: #d9534f;
+
+}
+.info{
+	background-color: #5bc0de;
+}
+.aiteBtn{
+	width: 100%;
+	display: block;
+  padding: 15px 20px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+span.unlock:hover{
+	cursor:pointer;
+}
+span.inSection{
+	color:red;
+}
+span.outSection{
+	color:black;
+}
