@@ -1,16 +1,58 @@
 <html>
     <head>
       <title>Aite</title>
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
       <link rel="stylesheet" type="text/css" href="aite.css">
+
     </head>
-    <body style="width:128px;">
-      <div style="text-align:center">Web-CAT Easy Grader</div>
-        <div>
-          <input name="disable" type="checkbox">Disable
+    <body style="width:360px;">
+      <div class="jumbotron jumbotron-fluid mb-0 pb-2">
+        <div class="container">
+          <h1 class="display-4 text-center">Web-CAT</h1>
+          <p class="lead ">This filtering mechanism works across assignments</p>
+          <ol>
+            <li>Click on all the student names in your sections and check "Filter" and "Lock Table" boxes.</li>
+            <li>Now, only the students in your sections are visible.</li>
+          </ol>
+
         </div>
-        <div>
-          <input name="showUI" type="checkbox">Show UI
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="input-group mb-0">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                  <input name="disable" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Disable">
+          </div>
+          <div class="input-group mb-0">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                  <input name="autoFilter" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Filter">
+          </div>
+          <div class="input-group mb-0">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                <input name="lock" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Lock Table">
+          </div>
+          <div class="input-group mb-0">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                  <input name="autoFilter" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Check Show Grade">
+          </div>
         </div>
+      </div>
       <script src="jquery-3.4.1.min.js"></script>
       <script src="popup.js"></script>
     </body>
