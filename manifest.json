@@ -21,7 +21,6 @@
     {
       "matches": [
         "https://webcat.eng.auburn.edu:8443/Web-CAT/*",
-        "https://*/Web-CAT/*"
       ],
       "js": ["jquery-3.4.1.min.js","aite.js"],
       "css": ["aite.css"],
