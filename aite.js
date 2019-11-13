@@ -3,12 +3,12 @@
  * @author Ai-Te Kuo
  */
 var studentInSection = new Set();
-var forceFliter = false;
 var autoFilter = false;
 var autoShowGrade = false;
 var pageType = 0;
 var lock = false;
 var disable = false;
+var lineNumber;
 
 /**
  * Feteh the form and remove all the information except the student list.
@@ -136,10 +136,15 @@ function toggleStudent(student) {
 
 function setUp() {
   var title = document.title;
-  if (title.includes("View Submissions"))
-    pageType = 1;
+  if (title.includes("View Submissions")){
+    if($("textarea").length == 0)
+      pageType = 1;
+    else
+      pageType = 3;
+  }
   else if (title.includes("Grade One Submission"))
     pageType = 2;
+
   switch(pageType) {
     case 1:
       // Submission Page
@@ -165,23 +170,52 @@ function setUp() {
   		break;
   	case 2:
   	  // Grade Page
-    	if (autoShowGrade)
       autoCheckGrade();
+      break;
+    case 3:
+      removeLineNumber();
+      break;
     default:
    		break;
   }
+}
+
+async function removeLineNumber() {
+  var attempts = 0;
+  var count = 0;
+  var object;
+  do {
+    object = $('iframe').contents().find('td.lineCount');
+    await timeout(10);
+  } while (object.length == 0 && attempts++ < 300);
+  if(lineNumber){
+    object.hide();
+  }
+  else
+    object.show();
+
+  do {
+    object = $('iframe').contents().find('pre.srcLine');
+    await timeout(10);
+  } while (object.length == 0 && attempts++ < 300);
+  object.each( function() {
+    if($(this).html().substr(0,6) == "&nbsp;")
+      $(this).html($(this).html().substr(6));
+  });
 }
 $(document).ready(function() {
   chrome.storage.sync.get({
     autoFilter: false,
     lock: false,
     disable: false,
-    autoShowGrade: false
+    autoShowGrade: false,
+    lineNumber: false,
   }, function(items) {
     autoFilter = items.autoFilter;
     lock = items.lock;
     disable = items.disable;
     autoShowGrade = items.autoShowGrade;
+    lineNumber = items.lineNumber;
     setUp();
     oneTimeTableRefreshListener();
   });
@@ -191,9 +225,13 @@ $(document).ready(function() {
       autoFilter = request.autoFilter;
       lock = request.lock;
       autoShowGrade = request.autoShowGrade;
+      lineNumber = request.lineNumber;
       if (pageType == 1)
         oneTimeTableRefreshListener();
       else if (pageType == 2)
         autoCheckGrade();
+      else if (pageType == 3)
+        removeLineNumber();
+      return true;
     });
 });
