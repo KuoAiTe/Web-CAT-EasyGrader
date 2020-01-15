@@ -80,7 +80,7 @@ async function refreshTable() {
     const inCount = studentList.find('.inSection').length;
     const outCount = studentList.find('.outSection').length;
     const currentStatus = inCount + "-" + outCount + "-" + autoFilter + "-" + lock + "-" + disable;
-    if (studentList && lastStatus != currentStatus) {
+    if (studentList && (inCount == 0 || outCount == 0 || lastStatus != currentStatus)) {
       let tdStudentDOM, student_info, tdStudentName, studentName, tr, inSection, classAttribute = 'unlock';
       for (let i = 0, len = studentList.length; i < len; i++) {
         inSection = false;
