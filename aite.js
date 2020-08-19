@@ -55,7 +55,7 @@ function timeout(ms) {
 
 /**
  * Automatically check off "Show grade to student?" if enabled.
- * 
+ *
  */
 async function autoCheckGrade() {
   if (!autoShowGrade || disable) return;
@@ -149,7 +149,7 @@ function setUp() {
       $(document).on("click", "span.inSection, span.outSection", function() {
         toggleStudent($(this));
       });
-      
+
       // bind click event
       $(document).on("click", "a.active, input.icon", function() {
         $("#webcat_Form_3 tbody:nth-child(2)").html("");
@@ -232,11 +232,17 @@ $(document).ready(function() {
   });
   chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-      disable = request.disable;
-      autoFilter = request.autoFilter;
-      lock = request.lock;
-      autoShowGrade = request.autoShowGrade;
-      lineNumber = request.lineNumber;
+      if(request.disable !== undefined)
+        disable = request.disable;
+
+      if(request.autoFilter !== undefined)
+        autoFilter = request.autoFilter;
+      if(request.lock !== undefined)
+        lock = request.lock;
+      if(request.autoShowGrade !== undefined)
+        autoShowGrade = request.autoShowGrade;
+      if(request.lineNumber !== undefined)
+        lineNumber = request.lineNumber;
       if (pageType == 1)
         ;
       else if (pageType == 2)
