@@ -1,8 +1,3 @@
-
-var selectedSection = "";
-var studentDict = {};
-var courseSection = new Set();
-
 async function studentRosterListener(){
   const url = window.location.href;
   const pattern = "/((http|ftp|https):\/\/)?auburn.instructure.com/courses/[1-9]*/users";
@@ -15,10 +10,26 @@ async function studentRosterListener(){
       clearInterval(checkExist);
       const roster = $(' > tbody > tr', rosterTable);
       roster.each(function(index) {
+        const studentName = $(this).find('td:eq(1)').text().trim();
+        const names = studentName.split(' ');
         const loginId = $(this).find('td:eq(2)').text().trim();
         const userId = $(this).attr('id').replace(/\D/g,'');
         const sections = $(this).find('td:eq(4) > div.section');
         const role = $(this).find('td:eq(5)').text().trim();
+        let firstName = "";
+        let middleName = "";
+        let lastName = "";
+        let key = "";
+        if (names.length == 2) {
+          firstName = names[0];
+          lastName = names[1];
+          key = `${lastName}, ${firstName}`
+        } else if (names.length == 3) {
+          firstName = names[0];
+          middleName = names[1];
+          lastName = names[2];
+          key = `${lastName}, ${firstName} ${middleName}`
+        }
         if (role == 'Student') {
           sections.each(function(sectionIndex) {
             const section = $(this).text().trim();
@@ -28,14 +39,28 @@ async function studentRosterListener(){
                 studentDict[userId] = {};
                 studentDict[userId][section] = {};
               }
+              if (!(loginId in studentDict)) {
+                studentDict[loginId] = {};
+                studentDict[loginId][section] = {};
+              }
+              if (!(key in studentDict)) {
+                studentDict[key] = {};
+                studentDict[key][section] = {};
+              }
             }
           }, this);
         }
       }, this);
+      chrome.storage.local.set({
+        studentDict: studentDict
+      }, function() {
+        //console.log(studentDict);
+      });
+
       chrome.storage.sync.set({
         courseSection: Array.from(courseSection),
-        studentDict: studentDict
-      }, function() {});
+      }, function() {
+      });
     }
   }, 100);
 }
@@ -84,18 +109,11 @@ function reloadDiscussionBoard(){
     }, this);
   }
 }
-$( document ).on( "click", "a.item", function() {
-  reloadDiscussionBoard();
-});
 $(document).ready(function() {
   chrome.storage.sync.get({
     courseSection: [],
-    studentDict: {},
-    selectedSection: "",
   }, function(items) {
     items.courseSection.reduce((s, e) => s.add(e), courseSection);
-    studentDict = items.studentDict;
-    selectedSection = items.selectedSection;
     studentRosterListener();
     discussionBoardListener();
   });
@@ -104,5 +122,10 @@ $(document).ready(function() {
       if(request.selectedSection !== undefined)
         selectedSection = request.selectedSection;
       reloadDiscussionBoard();
-    });
+    }
+  );
+
+  $( document ).on( "click", "a.item", function() {
+    reloadDiscussionBoard();
+  });
 });

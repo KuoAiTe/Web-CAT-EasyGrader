@@ -33,6 +33,16 @@ $( document ).ready(function() {
 			}
 
 	});
+	$( document ).on( "click", "#resetCache", function() {
+		chrome.storage.local.set({
+	    studentDict: {}
+		}, function() {
+			chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+				chrome.tabs.sendMessage(tabs[0].id, {studentDict: {}}, function(response) {
+				});
+			});
+		});
+	});
 	$( document ).on( "change", "#section", function() {
 		let selectedSection = $("#section :selected").text();
 		chrome.storage.sync.set({
