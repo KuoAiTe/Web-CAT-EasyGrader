@@ -1,21 +1,47 @@
 async function studentRosterListener(){
   const url = window.location.href;
-  const pattern = "/((http|ftp|https):\/\/)?auburn.instructure.com/courses/[1-9]*/users";
+  const pattern = /((http|ftp|https):\/\/)?auburn.instructure.com\/courses\/[0-9]*\/users/ig;
   const flags = 'ig';
   const regex = new RegExp(pattern, flags);
+  console.log(url.match(regex));
   if (!url.match(regex)) return;
   var checkExist = setInterval(function() {
     const rosterTable = $('table.roster');
     if (rosterTable.length) {
       clearInterval(checkExist);
       const roster = $(' > tbody > tr', rosterTable);
+      const rosterHead = $(' > thead > tr > th', rosterTable);
+      let studentNameIndex = -1;
+      let loginIdIndex = -1;
+      let roleIdIndex = -1;
+      let count = 0;
+      rosterHead.each(function(index) {
+        const title = $(this).text().trim();
+        switch (title) {
+          case 'Name':
+            count += 1;
+            studentNameIndex = index;
+            break;
+          case 'Role':
+            count += 1;
+            roleIdIndex = index;
+            break;
+          case 'Login ID':
+            count += 1;
+            loginIdIndex = index;
+            break;
+          default:
+            break;
+        }
+      });
+      if (count != 3) return;
       roster.each(function(index) {
-        const studentName = $(this).find('td:eq(1)').text().trim();
+        const studentName = $(this).find('td:eq(' + studentNameIndex + ')').text().trim();
         const names = studentName.split(' ');
-        const loginId = $(this).find('td:eq(2)').text().trim();
+        const loginId = $(this).find('td:eq(' + loginIdIndex + ')').text().trim();
         const userId = $(this).attr('id').replace(/\D/g,'');
-        const sections = $(this).find('td:eq(4) > div.section');
-        const role = $(this).find('td:eq(5)').text().trim();
+        const sections = $(this).find('td[data-test-id="section-column-cell"] > div.section');
+        const role = $(this).find('td:eq(' + roleIdIndex + ')').text().trim();
         let firstName = "";
         let middleName = "";
         let lastName = "";
@@ -31,9 +57,13 @@ async function studentRosterListener(){
           key = `${lastName}, ${firstName} ${middleName}`
         }
         if (role == 'Student') {
+          console.log(sections);
+          console.log(sections.html());
           sections.each(function(sectionIndex) {
             const section = $(this).text().trim();
+            console.log(section);
             if (section.length > 0 ) {
+              console.log(section);
               courseSection.add(section);
               if (!(userId in studentDict)) {
                 studentDict[userId] = {};

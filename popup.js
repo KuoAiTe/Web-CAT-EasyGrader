@@ -34,6 +34,15 @@ $( document ).ready(function() {
 
 	});
 	$( document ).on( "click", "#resetCache", function() {
+		$('#section > option:nth-child(n+3)').remove();
+		chrome.storage.sync.set({
+			courseSection: []
+		}, function() {
+			chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+				chrome.tabs.sendMessage(tabs[0].id, {courseSection: []}, function(response) {
+				});
+			});
+		});
 		chrome.storage.local.set({
 	    studentDict: {}
 		}, function() {

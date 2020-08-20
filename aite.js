@@ -302,6 +302,10 @@ $(document).ready(function() {
         lineNumber = request.lineNumber;
       if(request.studentDict !== undefined)
         studentDict = request.studentDict;
+      if(request.courseSection !== undefined) {
+        courseSection.clear();
+        request.courseSection.reduce((s, e) => s.add(e), courseSection);
+      }
       if (pageType == 1)
         tableChangeListener();
       else if (pageType == 2)
