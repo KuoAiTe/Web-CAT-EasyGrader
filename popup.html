@@ -5,7 +5,7 @@
       <link rel="stylesheet" type="text/css" href="aite.css">
 
     </head>
-    <body style="width:360px;">
+    <body style="width:600px;">
       <div class="jumbotron jumbotron-fluid mb-0 pb-2">
         <div class="container">
           <h1 class="display-4 text-center">Web-CAT</h1>
@@ -38,6 +38,14 @@
           <div class="input-group mb-0">
             <div class="input-group-prepend">
               <div class="input-group-text">
+                <input name="showSectionName" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Show Section">
+          </div>
+          <div class="input-group mb-0">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
                 <input name="lock" type="checkbox">
               </div>
             </div>
@@ -59,15 +67,22 @@
             </div>
             <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Remove Line Number & MessageBox">
           </div>
-
-          <h6>Canvas</h6>
           <div class="input-group mb-0">
-            <select id="section" class="form-control form-control-md">
-              <option>Student Mode</option>
-              <option>TA Mode</option>
-            </select>
-            <input id="resetCache" class="btn btn-primary" type="reset" value="Reset Canvas Cache">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                  <input name="showNoReplyPost" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Discussion Board - Only Show Posts Without Replies">
           </div>
+          <div class="p-3">
+            <h6 class="d-inline-block p-3">Canvas</h6>
+            <input id="resetCache" class="d-inline-block btn btn-primary float-right mt-2" type="reset" value="Reset Canvas Cache">
+          </div>
+          <div class="input-group mb-0">
+            <select id="section" class="form-control form-control-md" size="6" multiple></select>
+          </div>
+          <div class="alert alert-info" role="alert">Deselect options by ctrl-clicking it.</div>
         </div>
       </div>
       <script src="jquery-3.4.1.min.js"></script>

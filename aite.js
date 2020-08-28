@@ -8,12 +8,14 @@ var autoShowGrade = false;
 var pageType = 0;
 var lock = false;
 var disable = false;
+var showSectionName = false;
+var showNoReplyPost = false;
 var lineNumber;
-var selectedSection = "";
+var selectedSection = [];
 var studentDict = {};
 var courseSection = new Set();
 var lastStatus = '';
-const re = /([A-Za-z\s]+,?[A-Za-z\s]*) ?(\((\w+)\))*/;
+const re = /[^\(\)]+(?: \(([a-zA-z0-9]{7,10})\))?/g;
 /**
  * Feteh the form and remove all the information except the student list.
  * @return the student list DOM
@@ -54,21 +56,19 @@ function isStudentInSectionByIdOrName(studentName, studentId) {
 function getStudentName(tdStudentName) {
   tdStudentName = tdStudentName.trim();
   const studentName = tdStudentName.match(re);
-  let count = 0;
-  for (let i = 0; i < studentName.length; i++)
-    if (studentName[i] !== undefined)
-      count +=1;
-  return (studentName && count >= 2) ? studentName[1].trim() : tdStudentName;
+  if (studentName.length > 0)
+    return studentName[0].trim();
+  else
+    return tdStudentName;
 }
 
 function getStudentId(tdStudentName) {
  tdStudentName = tdStudentName.trim();
- const studentId = tdStudentName.match(re);
- let count = 0;
- for (let i = 0; i < studentId.length; i++)
-   if (studentId[i] !== undefined)
-     count +=1;
- return (studentId && count >= 4) ? studentId[3] : "";
+  const studentName = tdStudentName.match(re);
+  if (studentName.length > 1)
+    return studentName[1].trim();
+  else
+    return "";
 }
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -118,15 +118,14 @@ async function refreshTable() {
           studentName = getStudentName(tdStudentName);
           studentId = getStudentId(tdStudentName);
           inSection = isStudentInSection(studentName);
-          console.log(studentName + ":" + inSection);
           inSectionFromCanvas = isStudentInSectionByIdOrName(studentName, studentId);
           classAttribute = (lock) ? "locked " : "unlock ";
           classAttribute += (inSection) ? "inSection" : "outSection";
           if (disable) {
             tdStudentDOM.innerHTML = `<span>` + tdStudentName + `</span>`;
           } else {
+            section = '';
             if (inSectionFromCanvas) {
-              section = '';
               if (studentName in studentDict) {
                 for (const [key, value] of Object.entries(studentDict[studentName])) {
                   section += `${key} `;
@@ -136,6 +135,8 @@ async function refreshTable() {
                   section += `${key} `;
                 }
               }
+            }
+            if (showSectionName && section.length > 0) {
               tdStudentDOM.innerHTML = `<span class=" ${classAttribute}">` + tdStudentName + ' | ' + section + `</span>`;
             } else {
               tdStudentDOM.innerHTML = `<span class=" ${classAttribute}">` + tdStudentName + `</span>`;
@@ -160,8 +161,9 @@ function toggleStudent(student) {
   if (lock || disable) return;
   const tdStudentName = student[0].innerText;
   const studentName = getStudentName(tdStudentName);
+  const studentId = getStudentId(tdStudentName);
   const inSection = isStudentInSection(studentName);
-  console.log(studentName);
+  console.log(studentName + " " + studentId);
   const lockAttribute = (lock) ? "locked " : "unlock ";
   const classAttribute = (inSection) ? "outSection" : "inSection";
   (inSection) ? studentInSection.delete(studentName): studentInSection.add(studentName);
@@ -278,34 +280,46 @@ $(document).ready(function() {
     autoFilter: false,
     lock: false,
     disable: false,
+    showSectionName: false,
+    showNoReplyPost: false,
     autoShowGrade: false,
     lineNumber: false,
+    selectedSection: [],
   }, function(items) {
     autoFilter = items.autoFilter;
     lock = items.lock;
     disable = items.disable;
+    showNoReplyPost = items.showNoReplyPost;
+    showSectionName = items.showSectionName;
     autoShowGrade = items.autoShowGrade;
     lineNumber = items.lineNumber;
+    selectedSection = items.selectedSection;
     setUp();
   });
   chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-      if(request.disable !== undefined)
+      if (request.disable !== undefined)
         disable = request.disable;
-      if(request.autoFilter !== undefined)
+      if (request.autoFilter !== undefined)
         autoFilter = request.autoFilter;
-      if(request.lock !== undefined)
+      if (request.lock !== undefined)
         lock = request.lock;
-      if(request.autoShowGrade !== undefined)
+      if (request.autoShowGrade !== undefined)
         autoShowGrade = request.autoShowGrade;
-      if(request.lineNumber !== undefined)
+      if (request.lineNumber !== undefined)
         lineNumber = request.lineNumber;
-      if(request.studentDict !== undefined)
+      if (request.studentDict !== undefined)
         studentDict = request.studentDict;
-      if(request.courseSection !== undefined) {
+      if (request.courseSection !== undefined) {
         courseSection.clear();
         request.courseSection.reduce((s, e) => s.add(e), courseSection);
       }
+      if (request.selectedSection !== undefined)
+        selectedSection = request.selectedSection;
+      if (request.showSectionName !== undefined)
+        showSectionName = request.showSectionName;
+      if (request.showNoReplyPost !== undefined)
+        showNoReplyPost = request.showNoReplyPost;
       if (pageType == 1)
         tableChangeListener();
       else if (pageType == 2)
