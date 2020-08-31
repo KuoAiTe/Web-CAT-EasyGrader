@@ -217,6 +217,7 @@ function setUp() {
         studentInSection: [],
       }, function(items) {
         items.studentInSection.reduce((s, e) => s.add(e), studentInSection);
+        tableChangeListener();
       });
       tableChangeListener();
 
@@ -274,7 +275,7 @@ $(document).ready(function() {
     studentDict: {},
   }, function(items) {
     studentDict = items.studentDict;
-      console.log(studentDict);
+    console.log(studentDict);
   });
   chrome.storage.sync.get({
     autoFilter: false,
