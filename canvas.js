@@ -166,7 +166,6 @@ async function gradeBookListener() {
       msgbox.html("");
       return;
     }
-    console.log(studentGrade);
     if (studentId && assignmentId && assignmentId in hash) {
       studentId = studentId.match(/\d+/ig)[0];
       if (studentId in studentGrade) {

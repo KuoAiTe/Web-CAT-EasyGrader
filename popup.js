@@ -40,9 +40,9 @@ $( document ).ready(function() {
           }
           sectionCountDict[section] += 1;
         }
-        console.log(section);
+        //console.log(section);
       }
-      console.log(sectionCountDict);
+      //console.log(sectionCountDict);
 
       courseSection = Array.from(courseSection).sort();
       courseSection.forEach(function (value1,value2,set) {

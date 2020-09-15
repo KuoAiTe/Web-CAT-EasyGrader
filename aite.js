@@ -112,7 +112,6 @@ async function refreshTable() {
       let titleKey = undefined;
       if (titleMatch && titleMatch[1] !== undefined && titleMatch[2] !== undefined && titleMatch[3] !== undefined) titleKey = titleMatch[1] + "-" + parseInt(titleMatch[2],10) + titleMatch[3];
       else if (titleMatch && titleMatch[4] !== undefined && titleMatch[5] !== undefined && titleMatch[6] !== undefined) titleKey = titleMatch[4] + "-" + parseInt(titleMatch[5],10) + titleMatch[6];
-      console.log(titleKey);
       for (let i = 0, len = studentList.length; i < len; i++) {
         inSection = false;
         tr = studentList[i];
@@ -171,7 +170,10 @@ async function refreshTable() {
   		chrome.storage.local.set({
          studentGrade: studentGrade,
        }, function() {
-         //console.log(studentGrade);
+         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, {studentGrade: studentGrade}, function(response) {
+          });
+         });
       });
       lastStatus = currentStatus;
     }
