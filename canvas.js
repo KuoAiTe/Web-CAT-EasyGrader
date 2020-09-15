@@ -67,6 +67,10 @@ async function studentRosterListener(){
         studentGrade: studentGrade,
       }, function() {
         lastRosterSize = currentRosterSize;
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+         chrome.tabs.sendMessage(tabs[0].id, {studentDict: studentDict, studentGrade: studentGrade}, function(response) {
+         });
+        });
       });
 
       chrome.storage.sync.set({
@@ -162,6 +166,7 @@ async function gradeBookListener() {
       msgbox.html("");
       return;
     }
+    console.log(studentGrade);
     if (studentId && assignmentId && assignmentId in hash) {
       studentId = studentId.match(/\d+/ig)[0];
       if (studentId in studentGrade) {
@@ -290,6 +295,10 @@ $(document).ready(function() {
         selectedSection = request.selectedSection;
       if (request.autoSaveGrade !== undefined)
         autoSaveGrade = request.autoSaveGrade;
+      if (request.studentDict !== undefined)
+        studentDict = request.studentDict;
+      if (request.studentGrade !== undefined)
+        studentGrade = request.studentGrade;
       reloadDiscussionBoard();
       gradeBookListener();
     }
