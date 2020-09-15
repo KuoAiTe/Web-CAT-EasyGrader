@@ -10,9 +10,11 @@ var lock = false;
 var disable = false;
 var showSectionName = false;
 var showNoReplyPost = false;
+var autoSaveGrade = false;
 var lineNumber;
 var selectedSection = [];
 var studentDict = {};
+var studentGrade = {};
 var courseSection = new Set();
 var lastStatus = '';
 const re = /[^\(\)]+(?: \(([a-zA-z0-9]{7,10})\))?/g;
@@ -96,6 +98,7 @@ async function autoCheckGrade() {
 async function refreshTable() {
   const form = $("#webcat_Form_3");
   const formExist = form.length > 0;
+  const regex = /(?:(?:(Project) (\d\d)([A-Za-z]?) Completed Code)|(?:(Activity) (\d\d)([A-Za-z]?)))/ig;
   let isDone = false;
   if (formExist) {
     let studentList = getStudentList();
@@ -103,7 +106,13 @@ async function refreshTable() {
     const outCount = studentList.find('.outSection').length;
     const currentStatus = inCount + "-" + outCount + "-" + autoFilter + "-" + lock + "-" + disable;
     if (studentList && (inCount == 0 || outCount == 0 || lastStatus != currentStatus)) {
-      let tdStudentDOM, student_info, tdStudentName, studentName, tr, section, inSection, inSectionFromCanvas, classAttribute = 'unlock';
+      let tdStudentDOM, assignmentScore, student_info, tdStudentName, studentName, tr, section, inSection, inSectionFromCanvas, classAttribute = 'unlock';
+      const title = $('span.dijitTitlePaneTextNode').text();
+      const titleMatch = [...title.matchAll(regex)][0];
+      let titleKey = undefined;
+      if (titleMatch && titleMatch[1] !== undefined && titleMatch[2] !== undefined && titleMatch[3] !== undefined) titleKey = titleMatch[1] + "-" + parseInt(titleMatch[2],10) + titleMatch[3];
+      else if (titleMatch && titleMatch[4] !== undefined && titleMatch[5] !== undefined && titleMatch[6] !== undefined) titleKey = titleMatch[4] + "-" + parseInt(titleMatch[5],10) + titleMatch[6];
+      console.log(titleKey);
       for (let i = 0, len = studentList.length; i < len; i++) {
         inSection = false;
         tr = studentList[i];
@@ -117,6 +126,10 @@ async function refreshTable() {
           }
           studentName = getStudentName(tdStudentName);
           studentId = getStudentId(tdStudentName);
+          if (student_info.length == 9)
+            assignmentScore = Number(student_info[8].innerText);
+          else
+            assignmentScore = undefined;
           inSection = isStudentInSection(studentName);
           inSectionFromCanvas = isStudentInSectionByIdOrName(studentName, studentId);
           classAttribute = (lock) ? "locked " : "unlock ";
@@ -143,9 +156,23 @@ async function refreshTable() {
             }
           }
           tr.style.display = (autoFilter && !inSection && !disable) ? 'none' : 'table-row';
+          if (titleKey && studentId.length > 0) {
+            if (!(studentId in studentGrade)) {
+              studentGrade[studentId] = {};
+            }
+            if (assignmentScore >= 0)
+              studentGrade[studentId][titleKey] = assignmentScore;
+            else
+              delete studentGrade[studentId][titleKey];
+          }
         }
         isDone = true;
       }
+  		chrome.storage.local.set({
+         studentGrade: studentGrade,
+       }, function() {
+         //console.log(studentGrade);
+      });
       lastStatus = currentStatus;
     }
   }
@@ -201,15 +228,17 @@ function setUp() {
       $(document).on("click", "span.inSection, span.outSection", function() {
         toggleStudent($(this));
       });
-
       // bind click event
-      $(document).on("click", "a.active, input.icon", function() {
+      $(document).on("click", "a[href$='javascript:void(0);'], input.icon", function() {
         $("#webcat_Form_3 tbody:nth-child(2)").html("");
         tableChangeListener();
       });
       // bind table change event
       $(document).on("change", "table", function() {
         $("#webcat_Form_3 tbody:nth-child(2)").html("");
+        tableChangeListener();
+      });
+      $(document).on("keydown", "input", function() {
         tableChangeListener();
       });
 
@@ -273,9 +302,12 @@ function removeLineNumber() {
 $(document).ready(function() {
   chrome.storage.local.get({
     studentDict: {},
+    studentGrade: {},
   }, function(items) {
     studentDict = items.studentDict;
+    studentGrade = items.studentGrade;
     console.log(studentDict);
+    console.log(studentGrade);
   });
   chrome.storage.sync.get({
     autoFilter: false,
@@ -283,6 +315,7 @@ $(document).ready(function() {
     disable: false,
     showSectionName: false,
     showNoReplyPost: false,
+    autoSaveGrade: false,
     autoShowGrade: false,
     lineNumber: false,
     selectedSection: [],
@@ -291,6 +324,7 @@ $(document).ready(function() {
     lock = items.lock;
     disable = items.disable;
     showNoReplyPost = items.showNoReplyPost;
+    autoSaveGrade = items.autoSaveGrade;
     showSectionName = items.showSectionName;
     autoShowGrade = items.autoShowGrade;
     lineNumber = items.lineNumber;
@@ -311,6 +345,8 @@ $(document).ready(function() {
         lineNumber = request.lineNumber;
       if (request.studentDict !== undefined)
         studentDict = request.studentDict;
+      if (request.studentGrade !== undefined)
+        studentGrade = request.studentGrade;
       if (request.courseSection !== undefined) {
         courseSection.clear();
         request.courseSection.reduce((s, e) => s.add(e), courseSection);
@@ -321,6 +357,8 @@ $(document).ready(function() {
         showSectionName = request.showSectionName;
       if (request.showNoReplyPost !== undefined)
         showNoReplyPost = request.showNoReplyPost;
+      if (request.autoSaveGrade !== undefined)
+        autoSaveGrade = request.autoSaveGrade;
       if (pageType == 1)
         tableChangeListener();
       else if (pageType == 2)

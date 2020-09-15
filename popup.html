@@ -75,9 +75,26 @@
             </div>
             <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Discussion Board - Only Show Posts Without Replies">
           </div>
+          <div class="input-group mb-0">
+            <div class="input-group-prepend">
+              <div class="input-group-text">
+                  <input name="autoSaveGrade" type="checkbox">
+              </div>
+            </div>
+            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Canvas Gradebook Checker">
+          </div>
+          <div class="alert alert-info" role="alert">
+            <div style='color:#538d22'>O: The grade in Web-CAT matches.</div>
+            <div style='color:#bc4749'>W-C: The grade in Web-CAT.</div>
+            <div style='color:#bc4749'>NF: The grade in Web-CAT is not in the cache.</div>
+            <div style="color:#2a324b">SNF: The student data is not found in Canvas. Go to People to fix it.</div>
+            <div style="color:#2a324b">UNF: The user/student data is not found in Canvas or Web-CAT.</div>
+          </div>
           <div class="p-3">
             <h6 class="d-inline-block p-3">Canvas</h6>
-            <input id="resetCache" class="d-inline-block btn btn-primary float-right mt-2" type="reset" value="Reset Canvas Cache">
+            <div class="d-inline-block mt-2 float-right">
+            <input id="resetCache" class="d-inline-block btn btn-primary ml-4" type="reset" value="Reset All Cache">
+            </div>
           </div>
           <div class="input-group mb-0">
             <select id="section" class="form-control form-control-md" size="6" multiple></select>
