@@ -126,7 +126,7 @@ function getAssignmentUniqueKey(assignmentName){
     let assignmentKey = undefined;
     if (result !== undefined) {
      assignmentType = assignmentTypeMap[result[2]];
-     assignmentKey = (result[1] != undefined)? result[1] : result[3];
+     assignmentKey = (result[3] != undefined)? result[3] : result[1];
      if (assignmentKey !== undefined)
       assignmentKey = assignmentKey.replace(/^0+/, '');
     }
