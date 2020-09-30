@@ -159,7 +159,9 @@ async function refreshTable() {
       const title = $('div.dijitTitlePaneTitleFocus > span.dijitTitlePaneTextNode').first().text();
       const titleMatch = [...title.matchAll(regex)][0];
       const courseMatch = [...title.matchAll(courseRegex)][0];
-      const courseId = courseMatch[1];
+      let courseId = '';
+      if (courseMatch == undefined || courseMatch.length < 2) return false;
+      courseId = courseMatch[1];
       let assignmentKey = undefined;
       assignmentKey = getAssignmentUniqueKey(title);
       for (let i = 0, len = studentList.length; i < len; i++) {
