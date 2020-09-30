@@ -42,6 +42,12 @@ function isStudentInSection(studentName) {
   return studentInSection.has(studentName);
 }
 
+/**
+ * Given a student name and id, check if it is in the section.
+ * @param studentName example: Ai-Te, Kuo
+ * @param studentId exapmle: abc1234
+ * @return whether the student if in the set.
+ */
 function isStudentInSectionByIdOrName(studentName, studentId) {
   if (studentId.length == 0) return false;
   return studentName in studentDict || studentId in studentDict;
@@ -78,7 +84,6 @@ function timeout(ms) {
 
 /**
  * Automatically check off "Show grade to student?" if enabled.
- *
  */
 async function autoCheckGrade() {
   if (!autoShowGrade || disable) return;
@@ -90,6 +95,49 @@ async function autoCheckGrade() {
     checkBox.click();
 }
 /**
+ * Given a title, return submission key
+ * M1 Activity -> Activity-1
+ * N1 Activity -> Activity-1
+ * N1A Activity -> Activity-1A
+ * Activity 01 -> Activity-1
+ * Activity 01A -> Activity-1A
+ * Activity 0001A -> Activity-1A
+ * Activity 1A -> Activity-1A
+ * Act 01 -> Activity-01
+ * M6 Project -> Project-6
+ * Submissions for CPSC 1213 (CPSC-1213-AO1-Fall-2020) M1 Project -> Project-1
+ * Submissions for CPSC 1213 (CPSC-1213-AO1-Fall-2020) M6 Project (Completed Code) -> Project-6
+ * Submissions for CPSC 1223 (CPSC-1223-AO1-Fall-2020) M1 Activity (max 10 submits) -> Activity-1
+ * Submissions for CPSC 1223 (CPSC-1223-AO1-Fall-2020) M2 Project Completed Code (max 10 submits) -> Project-2
+ * Submissions for CPSC 1223 (CPSC-1223-AO1-Fall-2020) M2 Project  Skeleton Code (ungraded) -> undefined
+ * Submissions for CPSC 1223 (CPSC-1223-AO1-Fall-2020) M02A Project Completed Code (max 10 submits) -> Project-2A
+ * Submissions for COMP 1210 (COMP-1210-Fall-2020) Project 08A Completed Code (max 10 submits) -> Project-8A
+ * M1: Activity 1 -> Activity-1
+ * M6: Project 6 -> Project-6
+ * @return the right side
+ */
+function getAssignmentUniqueKey(assignmentName){
+  const regex = /(?:\w(\d+\w?))?:? *(Project|Proj|Pro|Activity|Actv|Act) *(\d+\w?)?/ig;
+  const assignmentTypeMap = { 'Proj': 'Project', 'Pro': 'Project', 'Project': 'Project', 'Act':'Activity', 'Actv':'Activity', 'Activity': 'Activity'};
+  const isSkeletonCode = (assignmentName.search(/Skeleton/i) > 0);
+  if (!isSkeletonCode) {
+    let result = [...assignmentName.matchAll(regex)][0];
+    let assignmentType = undefined;
+    let assignmentKey = undefined;
+    if (result !== undefined) {
+     assignmentType = assignmentTypeMap[result[2]];
+     assignmentKey = (result[1] != undefined)? result[1] : result[3];
+     if (assignmentKey !== undefined)
+      assignmentKey = assignmentKey.replace(/^0+/, '');
+    }
+    const key = `${assignmentType}-${assignmentKey}`;
+    if ( assignmentType != undefined && assignmentKey != undefined) {
+     return key;
+    }
+  }
+  return undefined;
+}
+/**
  * Refresh the table.
  * If the student is in the set, then assign class attribute "inSection"
  * Otherwise, "outSection"
@@ -98,7 +146,8 @@ async function autoCheckGrade() {
 async function refreshTable() {
   const form = $("#webcat_Form_3");
   const formExist = form.length > 0;
-  const regex = /(?:(?:(Project) (\d\d)([A-Za-z]?) Completed Code)|(?:(Activity) (\d\d)([A-Za-z]?)))/ig;
+  const courseRegex = /(\w+-\d+)-/ig;
+  const regex = /(?:(?:(Project) (\d+)([A-Za-z]?) Completed Code)|(?:(Activity) (\d+)([A-Za-z]?)))/ig;
   let isDone = false;
   if (formExist) {
     let studentList = getStudentList();
@@ -107,11 +156,12 @@ async function refreshTable() {
     const currentStatus = inCount + "-" + outCount + "-" + autoFilter + "-" + lock + "-" + disable;
     if (studentList && (inCount == 0 || outCount == 0 || lastStatus != currentStatus)) {
       let tdStudentDOM, assignmentScore, student_info, tdStudentName, studentName, tr, section, inSection, inSectionFromCanvas, classAttribute = 'unlock';
-      const title = $('span.dijitTitlePaneTextNode').text();
+      const title = $('div.dijitTitlePaneTitleFocus > span.dijitTitlePaneTextNode').first().text();
       const titleMatch = [...title.matchAll(regex)][0];
-      let titleKey = undefined;
-      if (titleMatch && titleMatch[1] !== undefined && titleMatch[2] !== undefined && titleMatch[3] !== undefined) titleKey = titleMatch[1] + "-" + parseInt(titleMatch[2],10) + titleMatch[3];
-      else if (titleMatch && titleMatch[4] !== undefined && titleMatch[5] !== undefined && titleMatch[6] !== undefined) titleKey = titleMatch[4] + "-" + parseInt(titleMatch[5],10) + titleMatch[6];
+      const courseMatch = [...title.matchAll(courseRegex)][0];
+      const courseId = courseMatch[1];
+      let assignmentKey = undefined;
+      assignmentKey = getAssignmentUniqueKey(title);
       for (let i = 0, len = studentList.length; i < len; i++) {
         inSection = false;
         tr = studentList[i];
@@ -155,14 +205,17 @@ async function refreshTable() {
             }
           }
           tr.style.display = (autoFilter && !inSection && !disable) ? 'none' : 'table-row';
-          if (titleKey && studentId.length > 0) {
-            if (!(studentId in studentGrade)) {
-              studentGrade[studentId] = {};
+          if (assignmentKey && studentId.length > 0) {
+            if (!(courseId in studentGrade)) {
+              studentGrade[courseId] = {};
+            }
+            if (!(studentId in studentGrade[courseId])) {
+              studentGrade[courseId][studentId] = {};
             }
             if (assignmentScore >= 0)
-              studentGrade[studentId][titleKey] = assignmentScore;
+              studentGrade[courseId][studentId][assignmentKey] = assignmentScore;
             else
-              delete studentGrade[studentId][titleKey];
+              delete studentGrade[courseId][studentId][assignmentKey];
           }
         }
         isDone = true;
@@ -192,7 +245,7 @@ function toggleStudent(student) {
   const studentName = getStudentName(tdStudentName);
   const studentId = getStudentId(tdStudentName);
   const inSection = isStudentInSection(studentName);
-  console.log(studentName + " " + studentId);
+  //console.log(studentName + " " + studentId);
   const lockAttribute = (lock) ? "locked " : "unlock ";
   const classAttribute = (inSection) ? "outSection" : "inSection";
   (inSection) ? studentInSection.delete(studentName): studentInSection.add(studentName);
@@ -308,8 +361,8 @@ $(document).ready(function() {
   }, function(items) {
     studentDict = items.studentDict;
     studentGrade = items.studentGrade;
-    console.log(studentDict);
-    console.log(studentGrade);
+    //console.log(studentDict);
+    //console.log(studentGrade);
   });
   chrome.storage.sync.get({
     autoFilter: false,

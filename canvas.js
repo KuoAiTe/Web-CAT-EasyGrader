@@ -2,10 +2,8 @@
 var lastRosterSize = 0
 async function studentRosterListener(){
   const url = window.location.href;
-  const pattern = /((http|ftp|https):\/\/)?auburn.instructure.com\/courses\/[0-9]*\/users/ig;
-  const flags = 'ig';
-  const regex = new RegExp(pattern, flags);
-  if (!url.match(regex)) return;
+  const pattern = /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/users/ig;
+  if (!url.match(pattern)) return;
   var checkExist = setInterval(function() {
     const rosterTable = $('table.roster');
     if (rosterTable.length) {
@@ -82,33 +80,32 @@ async function studentRosterListener(){
 
 var observerBuilt = false;
 const hash = {};
+let currentCourseKey = undefined;
 async function gradeBookListener() {
   const url = window.location.href;
-  const pattern = "/((http|ftp|https):\/\/)?auburn.instructure.com/courses/[1-9]*/gradebook";
-  const flags = 'ig';
-  const regex = new RegExp(pattern, flags);
-  const re = /(Activity|Project) (\d+[A-Za-z]?)/ig;
+  const urlPattern = /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/gradebook/ig;
   const reAssignment = /assignment_\d+/ig;
   const reStudent = /student_\d+/ig;
-  if (!url.match(regex)) return;
+  if (!url.match(urlPattern)) return;
   if (!autoSaveGrade) {
     $('div.Grid__GradeCell__EndContainer').html("");
     return;
   }
   if (!observerBuilt) {
     var checkExist = setInterval(function() {
+      const courseName = $('span.ellipsible').text().match(/(\w+-\d+)-/ig)[0];
       const gradeBook = $('div.slick-header-columns > .assignment');
-      if (gradeBook.length > 0) {
+      if (courseName.length > 0 && gradeBook.length > 0) {
+        currentCourseKey = courseName.substring(0, courseName.length - 1);
         const columns = $('div.slick-header-columns > .assignment');
         columns.each( function(index) {
           const columnId = $(this).attr('id');
           const columnTitle = $('.assignment-name', this).text();
-          const columnMatch = [...columnTitle.matchAll(re)][0];
-          if (columnMatch) {
-            const titleKey = columnMatch[1] + "-" + columnMatch[2];
+          const assignmentKey = getAssignmentUniqueKey(columnTitle);
+          if (assignmentKey !== undefined) {
             const assignmentHash = columnId.match(reAssignment)[0];
             $(this).css('backgroundColor','#2a9d8f');
-            hash[assignmentHash] = titleKey;
+            hash[assignmentHash] = assignmentKey;
           }
         });
         var targetNodes         = $(".grid-canvas");
@@ -148,6 +145,9 @@ async function gradeBookListener() {
   }
   function refreshSlickCell(target) {
     const correctMessage = "<span style='color:#538d22'>O</span>";
+    const userNotFoundGreenMessage = "<span style='color:#538d22'>UNF</span>";
+    const studentIdNotFoundGreenMessage = "<span style='color:#538d22'>SNF</span>";
+    const gradeNotFetchedGreenMessage = "<span style='color:#538d22'>NF</span>";
     const userNotFoundMessage = "<span style='color:#2a324b'>UNF</span>";
     const studentIdNotFoundMessage = "<span style='color:#2a324b'>SNF</span>";
     const gradeNotFetchedMessage = "<span style='color:#bc4749'>NF</span>";
@@ -166,60 +166,74 @@ async function gradeBookListener() {
       msgbox.html("");
       return;
     }
-    if (studentId && assignmentId && assignmentId in hash) {
-      studentId = studentId.match(/\d+/ig)[0];
-      if (studentId in studentGrade) {
-        const userId = studentGrade[studentId];
-        if (userId in studentGrade) {
-          const studentData = studentGrade[userId];
-          const assignmentKey = hash[assignmentId];
-          if (assignmentKey in studentData) {
-            // webcat does have a grade for the student
-            let webcatGrade = studentData[assignmentKey];
-            //console.log(studentId + ", " + assignmentId + "canvasGrade: " + canvasGrade + " webcatGrade: " + webcatGrade);
-            if (canvasGrade == '–') {
-              msgbox.html("<span style='color:#bc4749'>W-C:" + webcatGrade + "</span>");
-            } else {
-              canvasGrade = Number(canvasGrade);
-              webcatGrade = Number(webcatGrade);
-              if (Math.abs(canvasGrade- webcatGrade) < 1.0) {
-                msgbox.html(correctMessage);
-              } else {
+    if (currentCourseKey && studentId && assignmentId && assignmentId in hash) {
+      if (currentCourseKey in studentGrade){
+        const courseData = studentGrade[currentCourseKey];
+        studentId = studentId.match(/\d+/ig)[0];
+        if (studentId in studentGrade) {
+          const userId = studentGrade[studentId];
+          if (userId in courseData) {
+            const studentData = courseData[userId];
+            const assignmentKey = hash[assignmentId];
+            if (assignmentKey in studentData) {
+              // webcat does have a grade for the student
+              let webcatGrade = studentData[assignmentKey];
+              //console.log(studentId + ", " + assignmentId + "canvasGrade: " + canvasGrade + " webcatGrade: " + webcatGrade);
+              if (canvasGrade == '–') {
                 msgbox.html("<span style='color:#bc4749'>W-C:" + webcatGrade + "</span>");
+              } else {
+                canvasGrade = Number(canvasGrade);
+                webcatGrade = Number(webcatGrade);
+                if (Math.abs(canvasGrade- webcatGrade) < 0.1) {
+                  msgbox.html(correctMessage);
+                } else {
+                  msgbox.html("<span style='color:#bc4749'>W-C:" + webcatGrade + "</span>");
+                }
+              }
+            } else {
+              // web-cat grade missing
+              if (canvasGrade == '–'){
+                // nothing happens (student didn't hand in)
+              } else {
+                // canvas has a grade but web-cat didn't (Not Fetched)
+                if (canvasGrade != '' && Number(canvasGrade) < 1.0) {
+                  msgbox.html(gradeNotFetchedGreenMessage);
+                } else {
+                  msgbox.html(gradeNotFetchedMessage);
+
+                }
               }
             }
           } else {
-            // web-cat grade missing
-            if (canvasGrade == '–'){
-              // nothing happens (student didn't hand in)
-            } else {
-              // canvas has a grade but web-cat didn't (Not Fetched)
-              msgbox.html(gradeNotFetchedMessage);
+            // not userId
+            if (canvasGrade != '–') {
+              if (canvasGrade != '' && Number(canvasGrade) < 1.0) {
+                msgbox.html(userNotFoundGreenMessage);
+              } else {
+                msgbox.html(userNotFoundMessage);
+              }
             }
           }
         } else {
-          // not userId
-          if (canvasGrade != '–') {
-            msgbox.html(userNotFoundMessage);
+          // no student Id
+          if (canvasGrade.length > 0 && canvasGrade != '–') {
+            if (Number(canvasGrade) < 1.0) {
+              msgbox.html(studentIdNotFoundGreenMessage);
+            } else {
+              msgbox.html(studentIdNotFoundMessage);
+            }
           }
         }
-      } else {
-        // no student Id
-        if (canvasGrade != '–') {
-          msgbox.html(studentIdNotFoundMessage);
-        }
       }
+
     }
   }
 }
 
-
 async function discussionBoardListener() {
   const url = window.location.href;
-  const pattern = "/((http|ftp|https):\/\/)?auburn.instructure.com/courses/[1-9]*/discussion_topics/[1-9]*";
-  const flags = 'ig';
-  const regex = new RegExp(pattern, flags);
-  if (!url.match(regex)) return;
+  const pattern = /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/discussion_topics\/\d+/ig;
+  if (!url.match(pattern)) return;
   var checkExist = setInterval(function() {
     const discussionBoard = $('ul.discussion-entries');
     if (discussionBoard.length) {
@@ -228,6 +242,7 @@ async function discussionBoardListener() {
     }
   }, 100);
 }
+
 function reloadDiscussionBoard(){
   const discussionBoard = $('ul.discussion-entries:eq(0)');
   if (discussionBoard.length) {
