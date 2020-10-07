@@ -5,103 +5,86 @@
       <link rel="stylesheet" type="text/css" href="aite.css">
 
     </head>
-    <body style="width:600px;">
-      <div class="jumbotron jumbotron-fluid mb-0 pb-2">
-        <div class="container">
-          <h1 class="display-4 text-center">Web-CAT</h1>
-          <p class="lead ">This filtering mechanism works across assignments</p>
-          <ol>
-            <li>Click on all the student names in your sections and check "Filter" and "Lock Table" boxes.</li>
-            <li>Now, only the students in your sections are visible.</li>
-          </ol>
-
+    <body class="container" style="width:520px;">
+      <div class="row">
+        <div class="jumbotron jumbotron-fluid mb-0 pt-4 pb-2 col-12">
+          <div class="container text-center">
+            <h4 >Web-CAT Easy Grader</h4>
+          </div>
         </div>
       </div>
       <div class="row">
-        <div class="col-12">
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                  <input name="disable" type="checkbox">
-              </div>
+        <div class="col-12 p-0">
+          <div class="card">
+            <div class="card-header">
+              Web-CAT View Submissions
             </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Disable">
+            <ul class="list-group list-group-flush list-group-horizontal">
+              <li class="list-group-item flex-fill"><input name="disable" type="checkbox">  Disable</li>
+              <li class="list-group-item flex-fill"><input name="autoFilter" type="checkbox">  Filter</li>
+              <li class="list-group-item flex-fill"><input name="showSectionName" type="checkbox">  Show Section</li>
+              <li class="list-group-item flex-fill"><input name="lock" type="checkbox">  Lock Table</li>
+            </ul>
           </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                  <input name="autoFilter" type="checkbox">
-              </div>
+          <div class="card">
+            <div class="card-header">
+              Web-CAT Grade One Submission
             </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Filter">
+            <ul class="list-group list-group-flush list-group-horizontal">
+              <li class="list-group-item flex-fill"><input name="autoShowGrade" type="checkbox">  'Show Grade' Always On</li>
+              <li class="list-group-item flex-fill"><input name="lineNumber" type="checkbox">  Remove Line Number & MessageBox</li>
+            </ul>
           </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                <input name="showSectionName" type="checkbox">
-              </div>
+        </div>
+        <div class="col-12 p-0">
+          <div class="card">
+            <div class="card-header">
+              Canvas Gradebook Checker
             </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Show Section">
+            <ul class="list-group list-group-flush list-group-horizontal">
+              <li class="list-group-item flex-fill"><input name="autoSaveGrade" type="checkbox">  Enable</li>
+              <li class="list-group-item flex-fill"><input name="onlyShowTextInRed" type="checkbox">  Only Show Texts in Red</li>
+            </ul>
           </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                <input name="lock" type="checkbox">
-              </div>
+          <div class="card">
+            <div class="card-header">
+              Canvas Discussion Board
             </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Lock Table">
-          </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                  <input name="autoShowGrade" type="checkbox">
-              </div>
-            </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Auto Check Off 'Show Grade'">
-          </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                  <input name="lineNumber" type="checkbox">
-              </div>
-            </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Remove Line Number & MessageBox">
-          </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                  <input name="showNoReplyPost" type="checkbox">
-              </div>
-            </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Discussion Board - Only Show Posts Without Replies">
-          </div>
-          <div class="input-group mb-0">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                  <input name="autoSaveGrade" type="checkbox">
-              </div>
-            </div>
-            <input type="text" class="form-control" aria-label="Text input with checkbox" disabled="" value="Canvas Gradebook Checker">
-          </div>
-          <div class="alert alert-info" role="alert">
-            <div style='color:#538d22'>O: The grade in Web-CAT matches.</div>
-            <div style='color:#bc4749'>W-C: The grade in Web-CAT.</div>
-            <div style='color:#bc4749'>NF: The grade in Web-CAT is not in the cache.</div>
-            <div style="color:#2a324b">SNF: The student data is not found in Canvas. Go to People to fix it.</div>
-            <div style="color:#2a324b">UNF: The user/student data is not found in Canvas or Web-CAT.</div>
-          </div>
-          <div class="p-3">
-            <h6 class="d-inline-block p-3">Canvas</h6>
-            <div class="d-inline-block mt-2 float-right">
-            <input id="resetCache" class="d-inline-block btn btn-primary ml-4" type="reset" value="Reset All Cache">
-            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item flex-fill"><input name="showNoReplyPost" type="checkbox">  Only Show Posts Without Replies</li>
+            </ul>
           </div>
           <div class="input-group mb-0">
             <select id="section" class="form-control form-control-md" size="6" multiple></select>
           </div>
-          <div class="alert alert-info" role="alert">Deselect options by ctrl-clicking it.</div>
         </div>
       </div>
+      <div class="row">
+        <div class="col-12 p-0">
+          <div class="card">
+            <div class="card-header">
+              Info
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item"><div style='color:#538d22'>&#10004;: The grade in Web-CAT matches.</div></li>
+              <li class="list-group-item"><div style='color:#538d22'>&#10004;: The grade in Web-CAT matches.</div></li>
+              <li class="list-group-item"><div style='color:#bc4749'>W-C: The grade in Web-CAT.</div></li>
+              <li class="list-group-item"><div style='color:#bc4749'>NF: The grade in Web-CAT is not in the cache.</div></li>
+              <li class="list-group-item"><div style="color:#bc4749">SNF: The student data is not found in Canvas. Go to People to fix it.</div></li>
+              <li class="list-group-item"><div style="color:#bc4749">UNF: The user/student data is not found in Canvas or Web-CAT.</div></li>
+              <li class="list-group-item list-group-item-light">Deselect options by ctrl-clicking it.</li>
+            </ul>
+          </div>
+          <div class="jumbotron jumbotron-fluid mb-0 pt-4 pb-2">
+            <div class="container text-center">
+              <p class="lead ">Any questions? Email to: <a href="mailto:aitekuo@auburn.edu">aitekuo@auburn.edu</a></p>
+            </div>
+          </div>
+          <div class="text-center">
+            <input id="resetCache" class="btn btn-lg btn-block btn-danger mb-0 mt-0" type="reset" value="Clear All Cache (Canvas Data and Web-CAT Grades)">
+          </div>
+        </div>
+        </div>
       <script src="jquery-3.4.1.min.js"></script>
       <script src="popup.js"></script>
     </body>

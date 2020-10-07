@@ -43,18 +43,19 @@ async function studentRosterListener(){
         if (role == 'Student') {
           sections.each(function(sectionIndex) {
             const section = $(this).text().trim();
-            if (section.length > 0 ) {
-              courseSection.add(section);
+            const courseKey = getCourseKey(section);
+            if (courseKey != undefined ) {
+              courseSection.add(courseKey);
               if (!(userId in studentDict)) {
                 studentDict[userId] = {};
-                studentDict[userId][section] = {};
+                studentDict[userId][courseKey] = {};
               }
               if (userId.length > 0 && loginId.length > 0 && !(userId in studentGrade)) {
                 studentGrade[userId] = loginId;
               }
               if (!(loginId in studentDict)) {
                 studentDict[loginId] = {};
-                studentDict[loginId][section] = {};
+                studentDict[loginId][courseKey] = {};
               }
             }
           }, this);
@@ -80,38 +81,35 @@ async function studentRosterListener(){
 
 var observerBuilt = false;
 const hash = {};
-let currentCourseKey = undefined;
 async function gradeBookListener() {
   const url = window.location.href;
   const urlPattern = /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/gradebook/ig;
-  const reAssignment = /assignment_\d+/ig;
-  const reStudent = /student_\d+/ig;
+  const reAssignment = /assignment_\d+/i;
+  const reStudent = /student_(\d+)/i;
+  const correctMessage = "<span class='wceg-green' style='color:#538d22'>&#10004;</span>";
+  const userNotFoundGreenMessage = "<span class='wceg-green' style='color:#538d22'>UNF</span>";
+  const studentIdNotFoundGreenMessage = "<span class='wceg-green' style='color:#538d22'>SNF</span>";
+  const gradeNotFetchedGreenMessage = "<span class='wceg-green' style='color:#538d22'>NF</span>";
+  const userNotFoundMessage = "<span style='color:#bc4749'>UNF</span>";
+  const studentIdNotFoundMessage = "<span style='color:#bc4749'>SNF</span>";
+  const gradeNotFetchedMessage = "<span style='color:#bc4749'>NF</span>";
   if (!url.match(urlPattern)) return;
+  refreshAssignmentColumns();
   if (!autoSaveGrade) {
     $('div.Grid__GradeCell__EndContainer').html("");
     return;
   }
+  if (onlyShowTextInRed) {
+    $('span.wceg-green').html("");
+  }
+  const courseKey = getCourseKey(document.title);
   if (!observerBuilt) {
-    var checkExist = setInterval(function() {
-      const courseName = $('span.ellipsible').text().match(/(\w+-\d+)-/ig)[0];
-      const gradeBook = $('div.slick-header-columns > .assignment');
-      if (courseName.length > 0 && gradeBook.length > 0) {
-        currentCourseKey = courseName.substring(0, courseName.length - 1);
-        const columns = $('div.slick-header-columns > .assignment');
-        columns.each( function(index) {
-          const columnId = $(this).attr('id');
-          const columnTitle = $('.assignment-name', this).text();
-          const assignmentKey = getAssignmentUniqueKey(columnTitle);
-          if (assignmentKey !== undefined) {
-            const assignmentHash = columnId.match(reAssignment)[0];
-            $(this).css('backgroundColor','#2a9d8f');
-            hash[assignmentHash] = assignmentKey;
-          }
-        });
-        var targetNodes         = $(".grid-canvas");
-        var MutationObserver    = window.MutationObserver || window.WebKitMutationObserver;
-        var myObserver          = new MutationObserver(mutationHandler);
-        var obsConfig           = { childList: true, characterData: true, attributes: true, subtree: true };
+    const checkExist = setInterval(function() {
+      const targetNodes         = $(".grid-canvas");
+      if (courseKey != undefined && targetNodes.length > 0 && refreshAssignmentColumns()) {
+        const MutationObserver    = window.MutationObserver || window.WebKitMutationObserver;
+        const myObserver          = new MutationObserver(mutationHandler);
+        const obsConfig           = { childList: true, characterData: true, attributes: true, subtree: true };
         //--- Add a target node to the observer. Can only add one node at a time.
         targetNodes.each ( function () {
           myObserver.observe(this, obsConfig);
@@ -120,56 +118,70 @@ async function gradeBookListener() {
         clearInterval(checkExist);
       }
     }, 50);
-  } else {
-    $('div.slick-cell.assignment').each( function(index) {
-      refreshSlickCell($(this));
+  }
+  $('div.slick-cell.assignment').each( function(index) {
+    refreshSlickCell($(this), courseKey);
+  });
+
+  function refreshAssignmentColumns(){
+    const columns = $('div.slick-header-columns > .assignment');
+    if (columns.length == 0) return false;
+    columns.each( function(index) {
+      if (autoSaveGrade) {
+        const columnId = $(this).attr('id');
+        const columnTitle = $('.assignment-name', this).text();
+        const assignmentKey = getAssignmentUniqueKey(columnTitle);
+        if (assignmentKey !== undefined) {
+          $(this).css('backgroundColor','#2a9d8f');
+          const assignmentHash = columnId.match(reAssignment)[0];
+          if (!(assignmentHash in hash)) {
+            hash[assignmentHash] = assignmentKey;
+          }
+        }
+      } else {
+        $(this).css('backgroundColor','#f5f5f5');
+      }
     });
+    return true;
   }
   function mutationHandler (mutationRecords) {
-      mutationRecords.forEach ( function (mutation) {
-        if (mutation.type == "childList" && typeof mutation.addedNodes == "object") {
-            let target = $(mutation.addedNodes);
-            if (target.hasClass('Grid__GradeCell')) {
-              target = target.parent().parent();
-            }
-            if (target.hasClass('slick-cell')) {
-              target = target.parent();
-            }
-            if (target.hasClass('slick-row')){
-              $('.assignment', target).each( function(index) {
-                refreshSlickCell($(this));
-              });
-            }
-        }
-      } );
+    mutationRecords.forEach ( function (mutation) {
+      if (mutation.type == "childList" && typeof mutation.addedNodes == "object") {
+          let target = $(mutation.addedNodes);
+          if (target.hasClass('Grid__GradeCell')) {
+            target = target.parent().parent();
+          }
+          if (target.hasClass('slick-cell')) {
+            target = target.parent();
+          }
+          if (target.hasClass('slick-row')){
+            const courseKey = getCourseKey(document.title);
+            $('.assignment', target).each( function(index) {
+              refreshSlickCell($(this), courseKey);
+            });
+          }
+      }
+    });
   }
-  function refreshSlickCell(target) {
-    const correctMessage = "<span style='color:#538d22'>O</span>";
-    const userNotFoundGreenMessage = "<span style='color:#538d22'>UNF</span>";
-    const studentIdNotFoundGreenMessage = "<span style='color:#538d22'>SNF</span>";
-    const gradeNotFetchedGreenMessage = "<span style='color:#538d22'>NF</span>";
-    const userNotFoundMessage = "<span style='color:#2a324b'>UNF</span>";
-    const studentIdNotFoundMessage = "<span style='color:#2a324b'>SNF</span>";
-    const gradeNotFetchedMessage = "<span style='color:#bc4749'>NF</span>";
+  function refreshSlickCell(target, courseKey) {
     const cell = $(target);
     const msgbox = $('div.Grid__GradeCell__EndContainer', target);
-    let studentId = target.parent().attr('class').match(reStudent);
-    if (studentId && studentId.length > 0) {
-      studentId = studentId[0];
-    }
-    let assignmentId = cell.attr('class').match(reAssignment);
-    if (assignmentId && assignmentId.length > 0) {
-      assignmentId = assignmentId[0];
-    }
-    let canvasGrade = $('span.Grade', target).text().trim();
     if (!autoSaveGrade) {
       msgbox.html("");
       return;
     }
-    if (currentCourseKey && studentId && assignmentId && assignmentId in hash) {
-      if (currentCourseKey in studentGrade){
-        const courseData = studentGrade[currentCourseKey];
-        studentId = studentId.match(/\d+/ig)[0];
+    let studentId = target.parent().attr('class').match(reStudent);
+    if (studentId) {
+      studentId = studentId[1];
+    }
+    let assignmentId = cell.attr('class').match(reAssignment);
+    if (assignmentId) {
+      assignmentId = assignmentId[0];
+    }
+    let canvasGrade = $('span.Grade', target).text().trim();
+    if (courseKey && studentId && assignmentId && assignmentId in hash) {
+      if (courseKey in studentGrade){
+        const courseData = studentGrade[courseKey];
         if (studentId in studentGrade) {
           const userId = studentGrade[studentId];
           if (userId in courseData) {
@@ -180,14 +192,16 @@ async function gradeBookListener() {
               let webcatGrade = studentData[assignmentKey];
               //console.log(studentId + ", " + assignmentId + "canvasGrade: " + canvasGrade + " webcatGrade: " + webcatGrade);
               if (canvasGrade == '–') {
-                msgbox.html("<span style='color:#bc4749'>W-C:" + webcatGrade + "</span>");
+                msgbox.html("<span style='color:#bc4749'>WC:" + webcatGrade + "</span>");
               } else {
                 canvasGrade = Number(canvasGrade);
                 webcatGrade = Number(webcatGrade);
                 if (Math.abs(canvasGrade- webcatGrade) < 0.1) {
-                  msgbox.html(correctMessage);
+                  if (!onlyShowTextInRed){
+                    msgbox.html(correctMessage);
+                  }
                 } else {
-                  msgbox.html("<span style='color:#bc4749'>W-C:" + webcatGrade + "</span>");
+                  msgbox.html("<span style='color:#bc4749'>WC:" + webcatGrade + "</span>");
                 }
               }
             } else {
@@ -197,10 +211,11 @@ async function gradeBookListener() {
               } else {
                 // canvas has a grade but web-cat didn't (Not Fetched)
                 if (canvasGrade != '' && Number(canvasGrade) < 1.0) {
-                  msgbox.html(gradeNotFetchedGreenMessage);
+                  if (!onlyShowTextInRed) {
+                    msgbox.html(gradeNotFetchedGreenMessage);
+                  }
                 } else {
                   msgbox.html(gradeNotFetchedMessage);
-
                 }
               }
             }
@@ -208,7 +223,9 @@ async function gradeBookListener() {
             // not userId
             if (canvasGrade != '–') {
               if (canvasGrade != '' && Number(canvasGrade) < 1.0) {
-                msgbox.html(userNotFoundGreenMessage);
+                if (!onlyShowTextInRed) {
+                  msgbox.html(userNotFoundGreenMessage);
+                }
               } else {
                 msgbox.html(userNotFoundMessage);
               }
@@ -218,7 +235,9 @@ async function gradeBookListener() {
           // no student Id
           if (canvasGrade.length > 0 && canvasGrade != '–') {
             if (Number(canvasGrade) < 1.0) {
-              msgbox.html(studentIdNotFoundGreenMessage);
+              if (!onlyShowTextInRed) {
+                msgbox.html(studentIdNotFoundGreenMessage);
+              }
             } else {
               msgbox.html(studentIdNotFoundMessage);
             }

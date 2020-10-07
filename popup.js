@@ -13,6 +13,7 @@ $( document ).ready(function() {
       lineNumber: false,
       showSectionName: false,
       showNoReplyPost: false,
+      onlyShowTextInRed: false,
       autoSaveGrade: false,
       selectedSection: [],
       courseSection: [],
@@ -26,6 +27,7 @@ $( document ).ready(function() {
       let selectedSection = items.selectedSection;
       let showSectionName = items.showSectionName;
       let showNoReplyPost = items.showNoReplyPost;
+      let onlyShowTextInRed = items.onlyShowTextInRed;
       let autoSaveGrade = items.autoSaveGrade;
       items.courseSection.reduce((s, e) => s.add(e), courseSection);
       let sectionCountDict = {}
@@ -59,6 +61,7 @@ $( document ).ready(function() {
       $('input[name=lineNumber]').prop('checked', lineNumber);
       $('input[name=showSectionName]').prop('checked', showSectionName);
       $('input[name=showNoReplyPost]').prop('checked', showNoReplyPost);
+      $('input[name=onlyShowTextInRed]').prop('checked', onlyShowTextInRed);
       $('input[name=autoSaveGrade]').prop('checked', autoSaveGrade);
       selectedSection.forEach( section => {
         $('#section > option:contains(' + section + ')').prop('selected', true);
@@ -66,25 +69,29 @@ $( document ).ready(function() {
     });
   });
 	$( document ).on( "click", "#resetCache", function() {
-		$('#section > option').remove();
-		chrome.storage.sync.set({
-			courseSection: [],
-      selectedSection: []
-		}, function() {
-			chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-				chrome.tabs.sendMessage(tabs[0].id, {courseSection: [], selectedSection: []}, function(response) {
-				});
-			});
-		});
-		chrome.storage.local.set({
-     studentDict: {},
-     studentGrade: {},
-   }, function() {
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {studentDict: {}, studentGrade: {}}, function(response) {
+
+    const r = confirm("CLEAR ALL CACHE?");
+    if (r) {
+  		$('#section > option').remove();
+  		chrome.storage.sync.set({
+  			courseSection: [],
+        selectedSection: []
+  		}, function() {
+  			chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  				chrome.tabs.sendMessage(tabs[0].id, {courseSection: [], selectedSection: []}, function(response) {
+  				});
+  			});
+  		});
+  		chrome.storage.local.set({
+       studentDict: {},
+       studentGrade: {},
+     }, function() {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, {studentDict: {}, studentGrade: {}}, function(response) {
+          });
         });
       });
-    });
+    }
 	});
 	$( document ).on( "change", "#section", function() {
 		let selectedSection = new Set();
@@ -101,7 +108,7 @@ $( document ).ready(function() {
     });
    });
 	});
-	$( document ).on( "change", "input[name=autoFilter], input[name=lock], input[name=showNoReplyPost], input[name=autoSaveGrade], input[name=autoShowGrade], input[name=showSectionName], input[name=disable], input[name=lineNumber]", function() {
+	$( document ).on( "change", "input[name=autoFilter], input[name=lock], input[name=showNoReplyPost], input[name=onlyShowTextInRed], input[name=autoSaveGrade], input[name=autoShowGrade], input[name=showSectionName], input[name=disable], input[name=lineNumber]", function() {
    autoFilter = $("input[name=autoFilter]").is(':checked');
    lock = $("input[name=lock]").is(':checked');
    autoShowGrade = $("input[name=autoShowGrade]").is(':checked');
@@ -109,6 +116,7 @@ $( document ).ready(function() {
    lineNumber = $("input[name=lineNumber]").is(':checked');
    showSectionName = $("input[name=showSectionName]").is(':checked');
    showNoReplyPost = $("input[name=showNoReplyPost]").is(':checked');
+   onlyShowTextInRed = $('input[name=onlyShowTextInRed]').is(':checked');
    autoSaveGrade = $('input[name=autoSaveGrade]').is(':checked');
    chrome.storage.sync.set({
      autoFilter: autoFilter,
@@ -118,10 +126,11 @@ $( document ).ready(function() {
      lineNumber: lineNumber,
      showSectionName: showSectionName,
      showNoReplyPost: showNoReplyPost,
+     onlyShowTextInRed: onlyShowTextInRed,
      autoSaveGrade: autoSaveGrade,
    }, function() {
      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-       chrome.tabs.sendMessage(tabs[0].id, {autoFilter: autoFilter, lock: lock, autoSaveGrade: autoSaveGrade, showNoReplyPost: showNoReplyPost, autoShowGrade: autoShowGrade, disable: disable, lineNumber: lineNumber, showSectionName: showSectionName}, function(response) {
+       chrome.tabs.sendMessage(tabs[0].id, {autoFilter: autoFilter, lock: lock, autoSaveGrade: autoSaveGrade, showNoReplyPost: showNoReplyPost, onlyShowTextInRed: onlyShowTextInRed, autoShowGrade: autoShowGrade, disable: disable, lineNumber: lineNumber, showSectionName: showSectionName}, function(response) {
        });
      });
    });

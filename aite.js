@@ -10,6 +10,7 @@ var lock = false;
 var disable = false;
 var showSectionName = false;
 var showNoReplyPost = false;
+var onlyShowTextInRed = false;
 var autoSaveGrade = false;
 var lineNumber;
 var selectedSection = [];
@@ -94,6 +95,22 @@ async function autoCheckGrade() {
   if (!isPressed)
     checkBox.click();
 }
+function getCourseKey(str) {
+    const courseName = str.match(/\w+-\d+-\w+/i);
+    const courseYearMatch = str.match(/(Fall|Spring|Summer) (\d{4})/i);
+    let courseKey = undefined;
+    if (courseName != undefined && courseYearMatch != undefined) {
+      courseKey = `${courseName}-${courseYearMatch[1]}-${courseYearMatch[2]}`;
+    }
+
+    if (courseKey == undefined) {
+      const courseKeyMatch = str.match(/\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4}/i);
+      if (courseKeyMatch != undefined) {
+        courseKey = courseKeyMatch[0];
+      }
+    }
+    return courseKey;
+}
 /**
  * Given a title, return submission key
  * M1 Activity -> Activity-1
@@ -127,7 +144,7 @@ function getAssignmentUniqueKey(assignmentName){
     if (result !== undefined) {
      assignmentType = assignmentTypeMap[result[2]];
      assignmentKey = (result[3] != undefined)? result[3] : result[1];
-     if (assignmentKey !== undefined)
+     if (assignmentKey !== undefined && assignmentKey.length > 1)
       assignmentKey = assignmentKey.replace(/^0+/, '');
     }
     const key = `${assignmentType}-${assignmentKey}`;
@@ -146,39 +163,36 @@ function getAssignmentUniqueKey(assignmentName){
 async function refreshTable() {
   const form = $("#webcat_Form_3");
   const formExist = form.length > 0;
-  const courseRegex = /(\w+-\d+)-/ig;
-  const regex = /(?:(?:(Project) (\d+)([A-Za-z]?) Completed Code)|(?:(Activity) (\d+)([A-Za-z]?)))/ig;
   let isDone = false;
   if (formExist) {
     let studentList = getStudentList();
     const inCount = studentList.find('.inSection').length;
     const outCount = studentList.find('.outSection').length;
-    const currentStatus = inCount + "-" + outCount + "-" + autoFilter + "-" + lock + "-" + disable;
+
+    const currentStatus = `${inCount}-${outCount}-${autoFilter}-${lock}-${disable}-${showSectionName}-${selectedSection.join()}`;
+    console.log(currentStatus);
     if (studentList && (inCount == 0 || outCount == 0 || lastStatus != currentStatus)) {
       let tdStudentDOM, assignmentScore, student_info, tdStudentName, studentName, tr, section, inSection, inSectionFromCanvas, classAttribute = 'unlock';
       const title = $('div.dijitTitlePaneTitleFocus > span.dijitTitlePaneTextNode').first().text();
-      const titleMatch = [...title.matchAll(regex)][0];
-      const courseMatch = [...title.matchAll(courseRegex)][0];
-      let courseId = '';
-      if (courseMatch == undefined || courseMatch.length < 2) return false;
-      courseId = courseMatch[1];
+      const courseKey  = getCourseKey(title);
+      if (courseKey == undefined) return false;
       let assignmentKey = undefined;
       assignmentKey = getAssignmentUniqueKey(title);
       for (let i = 0, len = studentList.length; i < len; i++) {
         inSection = false;
         tr = studentList[i];
-        student_info = tr.getElementsByTagName("td");
+        student_info = $('td', tr);
         if (student_info && student_info.length > 1) {
-          tdStudentDOM = student_info[1];
-          tdStudentName = tdStudentDOM.innerText;
+          tdStudentDOM = student_info.eq(1);
+          tdStudentName = tdStudentDOM.text();
           const splitPoint = tdStudentName.indexOf(" |");
           if (splitPoint != -1) {
-            tdStudentName = tdStudentName.substring(0,splitPoint);
+            tdStudentName = tdStudentName.substring(0, splitPoint);
           }
           studentName = getStudentName(tdStudentName);
           studentId = getStudentId(tdStudentName);
           if (student_info.length == 9)
-            assignmentScore = Number(student_info[8].innerText);
+            assignmentScore = Number(student_info.eq(8).text());
           else
             assignmentScore = undefined;
           inSection = isStudentInSection(studentName);
@@ -186,38 +200,58 @@ async function refreshTable() {
           classAttribute = (lock) ? "locked " : "unlock ";
           classAttribute += (inSection) ? "inSection" : "outSection";
           if (disable) {
-            tdStudentDOM.innerHTML = `<span>` + tdStudentName + `</span>`;
+            tdStudentDOM.removeClass('locked unlock inSection outSection');
+            $('span.section', tdStudentDOM).hide();
           } else {
             section = '';
             if (inSectionFromCanvas) {
-              if (studentName in studentDict) {
-                for (const [key, value] of Object.entries(studentDict[studentName])) {
-                  section += `${key} `;
-                }
-              } else if (studentId in studentDict) {
+              if (studentId in studentDict) {
                 for (const [key, value] of Object.entries(studentDict[studentId])) {
                   section += `${key} `;
+                  let i = 0;
+                  for (; i < selectedSection.length; i++) {
+                    const sSection = selectedSection[i];
+                      if (sSection == key) {
+                        inSection = true;
+                      }
+                  }
                 }
               }
             }
+            tdStudentDOM.removeClass('locked unlock inSection outSection');
+            const sectionDOM = $('span.section', tdStudentDOM);
             if (showSectionName && section.length > 0) {
-              tdStudentDOM.innerHTML = `<span class=" ${classAttribute}">` + tdStudentName + ' | ' + section + `</span>`;
+              if (sectionDOM.length != 0) {
+                sectionDOM.show();
+              } else {
+                const html = tdStudentDOM.html();
+                var match      = html.match(re);
+                var firstIndex = html.indexOf(match[0]);
+                var lastIndex  = html.lastIndexOf(match[match.length-1]);
+                const newhtml = html.substring(0, lastIndex) + `<span class='section'> - ${section}` +  html.substring(lastIndex);
+                tdStudentDOM.html(newhtml);
+              }
+              tdStudentDOM.addClass(classAttribute);
             } else {
-              tdStudentDOM.innerHTML = `<span class=" ${classAttribute}">` + tdStudentName + `</span>`;
+              if (sectionDOM.length != 0) {
+                sectionDOM.hide();
+              }
+              tdStudentDOM.addClass(classAttribute);
             }
           }
+
           tr.style.display = (autoFilter && !inSection && !disable) ? 'none' : 'table-row';
           if (assignmentKey && studentId.length > 0) {
-            if (!(courseId in studentGrade)) {
-              studentGrade[courseId] = {};
+            if (!(courseKey in studentGrade)) {
+              studentGrade[courseKey] = {};
             }
-            if (!(studentId in studentGrade[courseId])) {
-              studentGrade[courseId][studentId] = {};
+            if (!(studentId in studentGrade[courseKey])) {
+              studentGrade[courseKey][studentId] = {};
             }
             if (assignmentScore >= 0)
-              studentGrade[courseId][studentId][assignmentKey] = assignmentScore;
+              studentGrade[courseKey][studentId][assignmentKey] = assignmentScore;
             else
-              delete studentGrade[courseId][studentId][assignmentKey];
+              delete studentGrade[courseKey][studentId][assignmentKey];
           }
         }
         isDone = true;
@@ -282,7 +316,7 @@ function setUp() {
     case 1:
       // Submission Page
       // Bind click events
-      $(document).on("click", "span.inSection, span.outSection", function() {
+      $(document).on("click", "td.inSection, td.outSection", function() {
         toggleStudent($(this));
       });
       // bind click event
@@ -363,8 +397,8 @@ $(document).ready(function() {
   }, function(items) {
     studentDict = items.studentDict;
     studentGrade = items.studentGrade;
-    //console.log(studentDict);
-    //console.log(studentGrade);
+    console.log(studentDict);
+    console.log(studentGrade);
   });
   chrome.storage.sync.get({
     autoFilter: false,
@@ -372,6 +406,7 @@ $(document).ready(function() {
     disable: false,
     showSectionName: false,
     showNoReplyPost: false,
+    onlyShowTextInRed: false,
     autoSaveGrade: false,
     autoShowGrade: false,
     lineNumber: false,
@@ -381,6 +416,7 @@ $(document).ready(function() {
     lock = items.lock;
     disable = items.disable;
     showNoReplyPost = items.showNoReplyPost;
+    onlyShowTextInRed = items.onlyShowTextInRed;
     autoSaveGrade = items.autoSaveGrade;
     showSectionName = items.showSectionName;
     autoShowGrade = items.autoShowGrade;
@@ -414,6 +450,8 @@ $(document).ready(function() {
         showSectionName = request.showSectionName;
       if (request.showNoReplyPost !== undefined)
         showNoReplyPost = request.showNoReplyPost;
+      if (request.onlyShowTextInRed !== undefined)
+        onlyShowTextInRed = request.onlyShowTextInRed;
       if (request.autoSaveGrade !== undefined)
         autoSaveGrade = request.autoSaveGrade;
       if (pageType == 1)
