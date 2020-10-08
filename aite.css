@@ -4,10 +4,15 @@
 }
 .edit{
 	background-color: #d9534f;
-
+}
+.danger{
+	background-color: #ffcad4 !important;
 }
 .info{
 	background-color: #5bc0de;
+}
+.assignment-column{
+  background-color: #a8dadc !important;
 }
 .aiteBtn{
 	width: 100%;

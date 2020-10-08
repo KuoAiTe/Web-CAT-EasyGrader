@@ -80,7 +80,8 @@ async function studentRosterListener(){
 }
 
 var observerBuilt = false;
-const hash = {};
+var hash = {};
+var inconsistencyMap = {};
 async function gradeBookListener() {
   const url = window.location.href;
   const urlPattern = /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/gradebook/ig;
@@ -95,12 +96,10 @@ async function gradeBookListener() {
   const gradeNotFetchedMessage = "<span style='color:#bc4749'>NF</span>";
   if (!url.match(urlPattern)) return;
   refreshAssignmentColumns();
+  showStudentsWithInconsistentGrades();
   if (!autoSaveGrade) {
     $('div.Grid__GradeCell__EndContainer').html("");
     return;
-  }
-  if (onlyShowTextInRed) {
-    $('span.wceg-green').html("");
   }
   const courseKey = getCourseKey(document.title);
   if (!observerBuilt) {
@@ -132,19 +131,20 @@ async function gradeBookListener() {
         const columnTitle = $('.assignment-name', this).text();
         const assignmentKey = getAssignmentUniqueKey(columnTitle);
         if (assignmentKey !== undefined) {
-          $(this).css('backgroundColor','#2a9d8f');
+          $(this).addClass('assignment-column');
           const assignmentHash = columnId.match(reAssignment)[0];
           if (!(assignmentHash in hash)) {
             hash[assignmentHash] = assignmentKey;
           }
         }
       } else {
-        $(this).css('backgroundColor','#f5f5f5');
+        $(this).removeClass('assignment-column');
       }
     });
     return true;
   }
   function mutationHandler (mutationRecords) {
+    let refresh = false;
     mutationRecords.forEach ( function (mutation) {
       if (mutation.type == "childList" && typeof mutation.addedNodes == "object") {
           let target = $(mutation.addedNodes);
@@ -155,13 +155,31 @@ async function gradeBookListener() {
             target = target.parent();
           }
           if (target.hasClass('slick-row')){
-            const courseKey = getCourseKey(document.title);
-            $('.assignment', target).each( function(index) {
-              refreshSlickCell($(this), courseKey);
-            });
+            refresh = true;
           }
       }
     });
+    if (refresh){
+      const courseKey = getCourseKey(document.title);
+      $('.slick-row .assignment').each( function(index) {
+        refreshSlickCell($(this), courseKey);
+      });
+      showStudentsWithInconsistentGrades();
+    }
+  }
+  function showStudentsWithInconsistentGrades(){
+    $(`.student`).removeClass('danger');
+    if (onlyShowTextInRed) {
+      let query = [];
+      for (const studentId in inconsistencyMap) {
+        const keySize = Object.keys(inconsistencyMap[studentId]).length;
+        if (keySize > 0){
+          query.push(`.student_${studentId} .student`);
+        }
+      }
+      query = query.join(',');
+      $(query).addClass('danger');
+    }
   }
   function refreshSlickCell(target, courseKey) {
     const cell = $(target);
@@ -182,6 +200,9 @@ async function gradeBookListener() {
     if (courseKey && studentId && assignmentId && assignmentId in hash) {
       if (courseKey in studentGrade){
         const courseData = studentGrade[courseKey];
+        if (!(studentId in inconsistencyMap)) {
+          inconsistencyMap[studentId] = {}
+        }
         if (studentId in studentGrade) {
           const userId = studentGrade[studentId];
           if (userId in courseData) {
@@ -192,16 +213,18 @@ async function gradeBookListener() {
               let webcatGrade = studentData[assignmentKey];
               //console.log(studentId + ", " + assignmentId + "canvasGrade: " + canvasGrade + " webcatGrade: " + webcatGrade);
               if (canvasGrade == '–') {
-                msgbox.html("<span style='color:#bc4749'>WC:" + webcatGrade + "</span>");
+                msgbox.html("<span style='color:#bc4749'>WC: " + webcatGrade + "</span>");
               } else {
                 canvasGrade = Number(canvasGrade);
                 webcatGrade = Number(webcatGrade);
                 if (Math.abs(canvasGrade- webcatGrade) < 0.1) {
-                  if (!onlyShowTextInRed){
-                    msgbox.html(correctMessage);
+                  msgbox.html(correctMessage);
+                  if (assignmentId in inconsistencyMap[studentId]) {
+                    delete inconsistencyMap[studentId][assignmentId];
                   }
                 } else {
-                  msgbox.html("<span style='color:#bc4749'>WC:" + webcatGrade + "</span>");
+                  inconsistencyMap[studentId][assignmentId] = true;
+                  msgbox.html("<span style='color:#bc4749'>WC: " + webcatGrade + "</span>");
                 }
               }
             } else {
@@ -210,11 +233,15 @@ async function gradeBookListener() {
                 // nothing happens (student didn't hand in)
               } else {
                 // canvas has a grade but web-cat didn't (Not Fetched)
-                if (canvasGrade != '' && Number(canvasGrade) < 1.0) {
-                  if (!onlyShowTextInRed) {
+                if (canvasGrade != '') {
+                  if (Number(canvasGrade) < 1.0) {
                     msgbox.html(gradeNotFetchedGreenMessage);
+                  } else {
+                    inconsistencyMap[studentId][assignmentId] = true;
+                    msgbox.html(gradeNotFetchedMessage);
                   }
                 } else {
+
                   msgbox.html(gradeNotFetchedMessage);
                 }
               }
@@ -222,11 +249,15 @@ async function gradeBookListener() {
           } else {
             // not userId
             if (canvasGrade != '–') {
-              if (canvasGrade != '' && Number(canvasGrade) < 1.0) {
-                if (!onlyShowTextInRed) {
+              if (canvasGrade != '') {
+                if (Number(canvasGrade) < 1.0) {
                   msgbox.html(userNotFoundGreenMessage);
+                } else {
+                  inconsistencyMap[studentId][assignmentId] = true;
+                  msgbox.html(userNotFoundMessage);
                 }
               } else {
+                inconsistencyMap[studentId][assignmentId] = true;
                 msgbox.html(userNotFoundMessage);
               }
             }
@@ -235,10 +266,9 @@ async function gradeBookListener() {
           // no student Id
           if (canvasGrade.length > 0 && canvasGrade != '–') {
             if (Number(canvasGrade) < 1.0) {
-              if (!onlyShowTextInRed) {
-                msgbox.html(studentIdNotFoundGreenMessage);
-              }
+              msgbox.html(studentIdNotFoundGreenMessage);
             } else {
+              inconsistencyMap[studentId][assignmentId] = true;
               msgbox.html(studentIdNotFoundMessage);
             }
           }

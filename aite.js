@@ -170,7 +170,6 @@ async function refreshTable() {
     const outCount = studentList.find('.outSection').length;
 
     const currentStatus = `${inCount}-${outCount}-${autoFilter}-${lock}-${disable}-${showSectionName}-${selectedSection.join()}`;
-    console.log(currentStatus);
     if (studentList && (inCount == 0 || outCount == 0 || lastStatus != currentStatus)) {
       let tdStudentDOM, assignmentScore, student_info, tdStudentName, studentName, tr, section, inSection, inSectionFromCanvas, classAttribute = 'unlock';
       const title = $('div.dijitTitlePaneTitleFocus > span.dijitTitlePaneTextNode').first().text();
@@ -228,7 +227,7 @@ async function refreshTable() {
                 var match      = html.match(re);
                 var firstIndex = html.indexOf(match[0]);
                 var lastIndex  = html.lastIndexOf(match[match.length-1]);
-                const newhtml = html.substring(0, lastIndex) + `<span class='section'> - ${section}` +  html.substring(lastIndex);
+                const newhtml = html.substring(0, lastIndex) + `<span class='section'> - ${section}</span>` +  html.substring(lastIndex);
                 tdStudentDOM.html(newhtml);
               }
               tdStudentDOM.addClass(classAttribute);
@@ -363,9 +362,17 @@ async function hideLineNumbers(){
   (lineNumber) ? lineNumbers.hide() : lineNumbers.show();
   // Remove indentation
   lineNumbers.each( function() {
-    if($(this).html().substr(0,6) == "&nbsp;")
-      $(this).html($(this).html().substr(6));
+    let content = $(this).html();
+    content = content.replace(/^(&nbsp;)+/, '');
+    $(this).html(content);
   });
+  const target = $('iframe').contents().find("tr[id^=N]");
+  if (lineNumber) {
+    $('iframe').contents().find('tr').removeClass('Warning Error');
+    target.hide();
+  } else {
+    target.show();
+  }
 }
 async function hideMessageBoxes(){
   let attempts = 0;
@@ -383,6 +390,15 @@ async function removeSrcLines(){
     srcLines = $('iframe').contents().find('pre.srcLine');
     await timeout(10);
   } while (srcLines.length == 0 && attempts++ < 300);
+  $('iframe').contents().find('table').css('width', '100%');
+  (lineNumber) ? srcLines.css('padding-left', '0px') : srcLines.css('padding-left', '10px');
+  (lineNumber) ? $('iframe').contents().find('body').css('margin', '0px') : $('iframe').contents().find('body').css('margin', '8px')
+
+  srcLines.each( function() {
+    let content = $(this).html();
+    content = content.replace(/^(&nbsp;)+/, '');
+    $(this).html(content);
+  });
 }
 function removeLineNumber() {
   hideLineNumbers();
@@ -397,8 +413,8 @@ $(document).ready(function() {
   }, function(items) {
     studentDict = items.studentDict;
     studentGrade = items.studentGrade;
-    console.log(studentDict);
-    console.log(studentGrade);
+    //console.log(studentDict);
+    //console.log(studentGrade);
   });
   chrome.storage.sync.get({
     autoFilter: false,
