@@ -31,21 +31,16 @@ $( document ).ready(function() {
       let autoSaveGrade = items.autoSaveGrade;
       items.courseSection.reduce((s, e) => s.add(e), courseSection);
       let sectionCountDict = {}
-      const regex = /([a-zA-Z]{3,4}[0-9]{3,5})/;
       for (let key in studentDict) {
-        if (!key.match(regex)) continue;
+        if (!key.match(REGEX.STUDENT_ID)) continue;
         const sections = studentDict[key];
         for (section in sections) {
-
           if (!(section in sectionCountDict)) {
             sectionCountDict[section] = 0;
           }
           sectionCountDict[section] += 1;
         }
-        //console.log(section);
       }
-      //console.log(sectionCountDict);
-
       courseSection = Array.from(courseSection).sort();
       courseSection.forEach(function (value1,value2,set) {
         let studentCount = 0;
@@ -69,7 +64,6 @@ $( document ).ready(function() {
     });
   });
 	$( document ).on( "click", "#resetCache", function() {
-
     const r = confirm("CLEAR ALL CACHE?");
     if (r) {
   		$('#section > option').remove();
@@ -93,21 +87,21 @@ $( document ).ready(function() {
       });
     }
 	});
-	$( document ).on( "change", "#section", function() {
-		let selectedSection = new Set();
+  $( document ).on( "change", "#section", function() {
+    let selectedSection = new Set();
     $("#section :selected").each(function() {
       selectedSection.add($(this).val());
     });
     selectedSection = Array.from(selectedSection).sort()
-		chrome.storage.sync.set({
-     selectedSection: selectedSection
-   }, function() {
-     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.storage.sync.set({
+      selectedSection: selectedSection
+    }, function() {
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       chrome.tabs.sendMessage(tabs[0].id, {selectedSection: selectedSection}, function(response) {
       });
     });
-   });
-	});
+    });
+  });
 	$( document ).on( "change", "input[name=autoFilter], input[name=lock], input[name=showNoReplyPost], input[name=onlyShowTextInRed], input[name=autoSaveGrade], input[name=autoShowGrade], input[name=showSectionName], input[name=disable], input[name=lineNumber]", function() {
    autoFilter = $("input[name=autoFilter]").is(':checked');
    lock = $("input[name=lock]").is(':checked');
@@ -130,7 +124,17 @@ $( document ).ready(function() {
      autoSaveGrade: autoSaveGrade,
    }, function() {
      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-       chrome.tabs.sendMessage(tabs[0].id, {autoFilter: autoFilter, lock: lock, autoSaveGrade: autoSaveGrade, showNoReplyPost: showNoReplyPost, onlyShowTextInRed: onlyShowTextInRed, autoShowGrade: autoShowGrade, disable: disable, lineNumber: lineNumber, showSectionName: showSectionName}, function(response) {
+       chrome.tabs.sendMessage(tabs[0].id, {
+         autoFilter: autoFilter,
+         lock: lock,
+         autoSaveGrade: autoSaveGrade,
+         showNoReplyPost: showNoReplyPost,
+         onlyShowTextInRed: onlyShowTextInRed,
+         autoShowGrade: autoShowGrade,
+         disable: disable,
+         lineNumber: lineNumber,
+         showSectionName: showSectionName
+       }, function(response) {
        });
      });
    });

@@ -1,0 +1,51 @@
+/**
+ * Global settings
+ * @author Ai-Te Kuo
+ */
+var studentInSection = new Set();
+var autoFilter = false;
+var autoShowGrade = false;
+var pageType = 0;
+var lock = false;
+var disable = false;
+var showSectionName = false;
+var showNoReplyPost = false;
+var onlyShowTextInRed = false;
+var autoSaveGrade = false;
+var lineNumber;
+var selectedSection = [];
+var studentDict = {};
+var studentGrade = {};
+var courseSection = new Set();
+var lastStatus = '';
+var lastRosterSize = 0
+const BG_TYPE = {
+  PINK: 0,
+  ORANGE: 1,
+  GREY: 2,
+  NONE: 9999
+};
+const URL_PATTERN = {
+  CANVAS_GRADEBOOK: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/gradebook/i,
+  CANVAS_PEOPLE: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/users/i,
+  CANVAS_DISCUSSIONS: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/discussion_topics\/\d+/i,
+};
+const REGEX = {
+  START_WITH_SPACES: /^(&nbsp;)+/,
+  STUDENT_ID: /([a-zA-Z]{3,4}[0-9]{3,5})/,
+  STUDENT_NAME_AND_ID: /[^\(\)]+(?: \(([a-zA-z0-9]{7,10})\))?/g,
+};
+var gradebookListenerBuilt = false;
+var hash = {};
+var inconsistencyMap = {};
+const reAssignment = /assignment_\d+/i;
+const reStudent = /student_(\d+)/i;
+const GRADE_MSG = {
+  GRADE_MATCH: "<span class='wceg-green'>&#10004;</span>",
+  USER_NOT_FOUND_GREEN: "<span class='wceg-green'>UNF</span>",
+  STUDENT_NOT_FOUND_GREEN: "<span class='wceg-green'>SNF</span>",
+  GRADE_NOT_FETCHED_GREEN: "<span class='wceg-green'>NF</span>",
+  USER_NOT_FOUND_RED: "<span class='wceg-red'>UNF</span>",
+  STUDENT_NOT_FOUND_RED: "<span class='wceg-red'>SNF</span>",
+  GRADE_NOT_FETCHED_RED: "<span class='wceg-red'>NF</span>",
+};

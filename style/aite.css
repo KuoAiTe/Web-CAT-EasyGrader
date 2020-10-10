@@ -5,8 +5,14 @@
 .edit{
 	background-color: #d9534f;
 }
-.danger{
+.student-need-attention{
 	background-color: #ffcad4 !important;
+}
+.student-not-graded{
+	background-color: #ffe1a8 !important;
+}
+.student-not-found{
+	background-color: #f0f0f0 !important;
 }
 .info{
 	background-color: #5bc0de;
@@ -50,4 +56,16 @@ div.card-header{
 }
 span.caution{
   color: #000;
+}
+.wceg-green {
+  color:#538d22
+}
+.wceg-red {
+  color:#bc4749
+}
+.wceg-orange {
+  color:#fb5607
+}
+.white-background {
+  background-color: white !important;
 }
