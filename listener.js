@@ -1,56 +1,3 @@
-const setUp = () => {
-  const title = document.title;
-  if (title.includes("View Submissions")){
-    if($("textarea").length == 0)
-      pageType = 1;
-    else
-      pageType = 3;
-  }
-  else if (title.includes("Grade One Submission"))
-    pageType = 2;
-
-  switch(pageType) {
-    case 1:
-      // Submission Page
-      // Bind click events
-      $(document).on("click", "td.inSection, td.outSection", function() {
-        toggleStudent($(this));
-      });
-      // bind click event
-      $(document).on("click", "a[href$='javascript:void(0);'], input.icon", function() {
-        $("#webcat_Form_3 tbody:nth-child(2)").html("");
-        tableChangeListener();
-      });
-      // bind table change event
-      $(document).on("change", "table", function() {
-        $("#webcat_Form_3 tbody:nth-child(2)").html("");
-        tableChangeListener();
-      });
-      $(document).on("keydown", "input", function() {
-        tableChangeListener();
-      });
-
-      chrome.storage.sync.get({
-        studentInSection: [],
-      }, function(items) {
-        items.studentInSection.reduce((s, e) => s.add(e), studentInSection);
-        tableChangeListener();
-      });
-      tableChangeListener();
-
-  		break;
-  	case 2:
-  	  // Grade Page
-      autoCheckGrade();
-      break;
-    case 3:
-      removeLineNumber();
-      break;
-    default:
-   		break;
-  }
-}
-
 $(document).ready(function() {
   chrome.storage.local.get({
     studentDict: {},
@@ -58,8 +5,8 @@ $(document).ready(function() {
   }, function(items) {
     studentDict = items.studentDict;
     studentGrade = items.studentGrade;
-    console.log(studentDict);
-    console.log(studentGrade);
+    //console.log(studentDict);
+    //console.log(studentGrade);
   });
   chrome.storage.sync.get({
     autoFilter: false,
@@ -84,12 +31,11 @@ $(document).ready(function() {
     autoShowGrade = items.autoShowGrade;
     lineNumber = items.lineNumber;
     selectedSection = items.selectedSection;
-    console.log(courseSection);
     items.courseSection.reduce((s, e) => s.add(e), courseSection);
     studentRosterListener();
     reloadDiscussionBoardListener();
     gradeBookListener();
-    setUp();
+    webcatListener();
   });
   chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
@@ -121,12 +67,7 @@ $(document).ready(function() {
         onlyShowTextInRed = request.onlyShowTextInRed;
       if (request.autoSaveGrade !== undefined)
         autoSaveGrade = request.autoSaveGrade;
-      if (pageType == 1)
-        tableChangeListener();
-      else if (pageType == 2)
-        autoCheckGrade();
-      else if (pageType == 3)
-        removeLineNumber();
+      webcatListener();
       reloadDiscussionBoardListener();
       gradeBookListener();
 

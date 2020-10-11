@@ -87,7 +87,7 @@ const mutationHandler = async (mutationRecords) => {
 }
 
 const showStudentsWithInconsistentGrades = async () => {
-  $(`.student`).removeClass('student-need-attention student-not-found');
+  $(`.student`).removeClass('student-need-attention student-not-graded student-not-found');
   if (onlyShowTextInRed) {
     let pinkBg = [];
     let greyBg = [];
@@ -108,7 +108,7 @@ const showStudentsWithInconsistentGrades = async () => {
         case BG_TYPE.PINK:
           pinkBg.push(`.student_${studentId} .student`);
           break;
-        case BG_TYPE.Orange:
+        case BG_TYPE.ORANGE:
           orangeBg.push(`.student_${studentId} .student`);
           break;
         case BG_TYPE.GREY:
@@ -167,7 +167,7 @@ const refreshSlickCell = async (target, courseKey) => {
       bgtype = errorGradeHandler(msgbox, canvasGrade, GRADE_MSG.STUDENT_NOT_FOUND_RED, GRADE_MSG.STUDENT_NOT_FOUND_GREEN);
     }
     if (!(studentId in inconsistencyMap)) {
-      inconsistencyMap[studentId] = {}
+      inconsistencyMap[studentId] = {};
     }
     inconsistencyMap[studentId][assignmentId] = bgtype;
   }
@@ -177,26 +177,27 @@ const correctGradeHandler = (msgbox, canvasGrade, webcatGradeInfo) => {
   let bgtype = BG_TYPE.NONE;
   const graded = webcatGradeInfo['graded'];
   const testingScore = webcatGradeInfo['testingScore'];
-  const totalChecks = webcatGradeInfo['totalChecks'];
-  const staffScore = webcatGradeInfo['assignmentScore'];
+  const toolChecks = webcatGradeInfo['toolChecks'];
+  let staffScore = webcatGradeInfo['staffScore'];
+  if (staffScore == undefined) staffScore = 'Unavailable'
   const latePenalties = webcatGradeInfo['latePenalties'];
   const webcatGrade = webcatGradeInfo['assignmentScore'];
+  const gradetip = `Total: ${webcatGrade}&#xa;Testing: ${testingScore}&#xa;ToolChecks: ${toolChecks}&#xa;Staff: ${staffScore}&#xa;Late: ${latePenalties}`;
   if (canvasGrade == '–') {
     if (graded) {
-      msgbox.html(`<span class='wceg-red'>WC: ${webcatGrade}</span>`);
+      msgbox.html(`<div class='wceg-red' grade-tip="${gradetip}">WC: ${webcatGrade}</div>`);
       bgtype = BG_TYPE.PINK;
     } else {
-      msgbox.html(`<span class='wceg-orange'>NG: ${webcatGrade}</span>`);
+      msgbox.html(`<div class='wceg-orange' grade-tip="${gradetip}">NG: ${webcatGrade}</div>`);
       bgtype = BG_TYPE.ORANGE;
-
     }
   } else {
     const difference = Math.abs(parseFloat(canvasGrade) - parseFloat(webcatGrade));
     if (difference < 0.1) {
-      msgbox.html(GRADE_MSG.GRADE_MATCH);
+      msgbox.html(`<div class='wceg-green' grade-tip="${gradetip}">&#10004;</div>`);
     } else {
       bgtype = BG_TYPE.PINK;
-      msgbox.html(`<span class='wceg-red'>WC: ${webcatGrade}</span>`);
+      msgbox.html(`<div class='wceg-red' grade-tip="${gradetip}">WC: ${webcatGrade}</div>`);
     }
   }
   return bgtype;

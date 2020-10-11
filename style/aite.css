@@ -58,14 +58,41 @@ span.caution{
   color: #000;
 }
 .wceg-green {
-  color:#538d22
+  color:#538d22;
 }
 .wceg-red {
-  color:#bc4749
+  color:#bc4749;
 }
 .wceg-orange {
-  color:#fb5607
+  color:#e09f3e;
 }
 .white-background {
   background-color: white !important;
+}
+
+[grade-tip]:before {
+  content: attr(grade-tip);
+  position: absolute;
+  opacity: 0;
+  white-space: pre;
+  display: inline-block
+
+  /* customizable */
+  transition: all 0.15s ease;
+  padding: 10px;
+  color: white;
+  border-radius: 10px;
+  box-shadow: 2px 2px 1px silver;
+}
+
+[grade-tip]:hover:before {
+  z-index: 9999;
+  opacity: 1.0;
+  background: #023e8a;
+  margin-top: -2px;
+  margin-left: 13px;
+}
+
+[grade-tip]:not([grade-tip-persistent]):before {
+  pointer-events: none;
 }

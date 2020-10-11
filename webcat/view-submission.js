@@ -1,5 +1,54 @@
+const webcatListener = () => {
+  const url = window.location.href;
+  const urlPattern = URL_PATTERN.WEBCAT;
+  if (url.match(urlPattern) === null) return;
+  const title = document.title;
+  if (title.includes("View Submissions"))
+    pageType = ($("textarea").length == 0)? 1 : 3;
+  else if (title.includes("Grade One Submission"))
+    pageType = 2;
+
+  switch(pageType) {
+    case 1:
+      // Submission Page
+      if(!webcatListenerBuilt) {
+        webcatListenerBuilt = true;
+        // Bind click events
+        $(document).on("click", "td.inSection, td.outSection", function() {
+          toggleStudent($(this));
+        });
+        // bind click event
+        $(document).on("click", "a[href$='javascript:void(0);'], input.icon", function() {
+          $("#webcat_Form_3 tbody:nth-child(2)").html("");
+          tableChangeListener();
+        });
+        // bind table change event
+        $(document).on("change", "table", function() {
+          $("#webcat_Form_3 tbody:nth-child(2)").html("");
+          tableChangeListener();
+        });
+        $(document).on("keydown", "input", function() {
+          tableChangeListener();
+        });
+        chrome.storage.sync.get({
+          studentInSection: [],
+        }, function(items) {
+          items.studentInSection.reduce((s, e) => s.add(e), studentInSection);
+          tableChangeListener();
+        });
+      }
+      tableChangeListener();
+  		break;
+  	case 2:
+      autoCheckGrade();
+      break;
+    case 3:
+      removeLineNumber();
+      break;
+  }
+}
+
 const tableChangeListener = async () => {
-  console.log("wow");
   let isDone = false;
   do {
     isDone = await refreshTable();
@@ -71,6 +120,7 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
     studetNameDOM.removeClass('locked unlock inSection outSection');
     const sectionDOM = $('span.section', studetNameDOM);
     if (disable) {
+      studentRow.show();
       sectionDOM.hide();
       return ;
     }
@@ -83,7 +133,7 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
     const studentName = getStudentName(studentNameFullText);
     const studentId = getStudentId(studentNameFullText);
     const testingScore = Number(student_info.eq(4).text());
-    const totalChecks = Number(student_info.eq(5).text());
+    const toolChecks = Number(student_info.eq(5).text());
     const staffScore = Number(student_info.eq(6).text());
     const latePenalties = Number(student_info.eq(7).text());
     const assignmentScore = Number(student_info.eq(8).text());
@@ -109,7 +159,7 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
       studentGrade[courseKey][studentId][assignmentKey] = {
         'graded': graded,
         'testingScore': testingScore,
-        'totalChecks': totalChecks,
+        'toolChecks': toolChecks,
         'staffScore': staffScore,
         'latePenalties': latePenalties,
         'assignmentScore': assignmentScore,
