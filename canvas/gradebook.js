@@ -154,9 +154,10 @@ const refreshSlickCell = async (target, courseKey) => {
       if (userId in courseData) {
         const studentData = courseData[userId];
         const assignmentKey = hash[assignmentId];
+        const settingInfo = courseData['max'][assignmentKey];
         if (assignmentKey in studentData) {
           const webcatGradeInfo = studentData[assignmentKey];
-          bgtype = correctGradeHandler(msgbox, canvasGrade, webcatGradeInfo)
+          bgtype = correctGradeHandler(msgbox, canvasGrade, webcatGradeInfo, settingInfo)
         } else {
           bgtype = errorGradeHandler(msgbox, canvasGrade, GRADE_MSG.GRADE_NOT_FETCHED_RED, GRADE_MSG.GRADE_NOT_FETCHED_GREEN);
         }
@@ -173,16 +174,36 @@ const refreshSlickCell = async (target, courseKey) => {
   }
 }
 
-const correctGradeHandler = (msgbox, canvasGrade, webcatGradeInfo) => {
+const correctGradeHandler = (msgbox, canvasGrade, webcatGradeInfo, settingInfo) => {
   let bgtype = BG_TYPE.NONE;
   const graded = webcatGradeInfo['graded'];
   const testingScore = webcatGradeInfo['testingScore'];
   const toolChecks = webcatGradeInfo['toolChecks'];
   let staffScore = webcatGradeInfo['staffScore'];
-  if (staffScore == undefined) staffScore = 'Unavailable'
+  if (staffScore == undefined) staffScore = '__'
   const latePenalties = webcatGradeInfo['latePenalties'];
   const webcatGrade = webcatGradeInfo['assignmentScore'];
-  const gradetip = `Total: ${webcatGrade}&#xa;Testing: ${testingScore}&#xa;ToolChecks: ${toolChecks}&#xa;Staff: ${staffScore}&#xa;Late: ${latePenalties}`;
+
+  let maxTestingScore = '';
+  let maxToolChecks = '';
+  let maxStaffScore = '';
+  let maxTotalScore = '';
+  if (settingInfo != undefined) {
+    if ('maxTestingScore' in settingInfo)
+      maxTestingScore = ` / ${settingInfo['maxTestingScore']}`;
+    if ('maxToolChecks' in settingInfo)
+      maxToolChecks = ` / ${settingInfo['maxToolChecks']}`;
+    if ('maxStaffScore' in settingInfo)
+      maxStaffScore = ` / ${settingInfo['maxStaffScore']}`;
+    if ('maxAssignmentScore' in settingInfo)
+      maxTotalScore = ` / ${settingInfo['maxAssignmentScore']}`;
+  }
+  var gradetip = `Total: ${webcatGrade}${maxTotalScore} &#xa;`;
+
+  gradetip += `Testing: ${testingScore}${maxTestingScore}  `;
+  gradetip += `ToolChecks: ${toolChecks}${maxToolChecks} &#xa;`;
+  gradetip += `Staff: ${staffScore}${maxStaffScore}  `;
+  gradetip += `Late: ${latePenalties}`;
   if (canvasGrade == '–') {
     if (graded) {
       msgbox.html(`<div class='wceg-red' grade-tip="${gradetip}">WC: ${webcatGrade}</div>`);

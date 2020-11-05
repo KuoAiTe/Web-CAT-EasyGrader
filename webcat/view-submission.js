@@ -150,12 +150,31 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
       if (!(studentId in studentGrade[courseKey])) {
         studentGrade[courseKey][studentId] = {};
       }
+
+      if (!('max' in studentGrade[courseKey])) {
+        studentGrade[courseKey]['max'] = {}
+      }
+
+      if (!(assignmentKey in studentGrade[courseKey]['max'])) {
+        studentGrade[courseKey]['max'][assignmentKey] = {
+          'maxTestingScore': 0.0,
+          'maxToolChecks': 0.0,
+          'maxStaffScore': 0.0,
+          'maxAssignmentScore': 0.0,
+        };
+      }
       let graded = false;
       if (assignmentKey.indexOf("Activity") != -1) {
         graded = true;
       } else {
         graded = !isNaN(staffScore);
       }
+      let newMaxSetting = studentGrade[courseKey]['max'][assignmentKey];
+      newMaxSetting['maxAssignmentScore'] = Math.max(Number(newMaxSetting['maxAssignmentScore']), Number(assignmentScore));
+      newMaxSetting['maxTestingScore'] = Math.max(Number(newMaxSetting['maxTestingScore']), Number(testingScore));
+      newMaxSetting['maxToolChecks'] = Math.max(Number(newMaxSetting['maxToolChecks']), Number(toolChecks));
+      newMaxSetting['maxStaffScore'] = Math.max(Number(newMaxSetting['maxStaffScore']), Number(newMaxSetting['maxAssignmentScore'] - newMaxSetting['maxTestingScore'] - newMaxSetting['maxToolChecks']));
+      studentGrade[courseKey]['max'][assignmentKey] = newMaxSetting;
       studentGrade[courseKey][studentId][assignmentKey] = {
         'graded': graded,
         'testingScore': testingScore,
