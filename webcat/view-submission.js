@@ -101,16 +101,53 @@ const refreshTable = async () => {
       if (courseKey == undefined) return false;
       const assignmentKey = getAssignmentUniqueKey(title);
       if (assignmentKey == undefined) return false;
+      getMaximumScoreFromStaff(courseKey, assignmentKey);
       studentList.each(function() {
         refreshRow(courseKey, assignmentKey, $(this));
       });
+      //console.log(  studentGrade[courseKey]['max'][assignmentKey]);
       isDone = true;
       lastStatus = currentStatus;
     }
   }
   return isDone;
 }
+const getMaximumScoreFromStaff = (courseKey, assignmentKey) => {
+  const staffs = $('tbody.top > tr');
+  staffs.each(function() {
+    const columns = $(' > td', $(this));
+    if (columns.length == 7) {
+      const userName = columns.eq(1).text().trim();
+      const testingScore = parseInt(columns.eq(4).text()) || 0;
+      const staffScore = parseInt(columns.eq(5).text()) || 0;
+      const totalScore = parseInt(columns.eq(6).text()) || 0;
+      const toolChecks = totalScore - testingScore - staffScore;
 
+      if (!('max' in studentGrade[courseKey])) {
+        studentGrade[courseKey]['max'] = {}
+      }
+
+      if (!(assignmentKey in studentGrade[courseKey]['max'])) {
+        studentGrade[courseKey]['max'][assignmentKey] = {
+          'maxTestingScore': 0.0,
+          'maxToolChecks': 0.0,
+          'maxStaffScore': 0.0,
+          'maxAssignmentScore': 0.0,
+        };
+      }
+      let newMaxSetting = studentGrade[courseKey]['max'][assignmentKey]
+      newMaxSetting['maxTestingScore'] = Math.max(newMaxSetting['maxTestingScore'], testingScore);
+      newMaxSetting['maxToolChecks'] = Math.max(newMaxSetting['maxToolChecks'], toolChecks);
+      newMaxSetting['maxStaffScore'] = Math.max(newMaxSetting['maxStaffScore'], staffScore);
+      newMaxSetting['maxAssignmentScore'] = newMaxSetting['maxTestingScore'] + newMaxSetting['maxToolChecks'] + newMaxSetting['maxStaffScore'];
+      if (staffScore >= 100) {
+        delete studentGrade[courseKey]['max'][assignmentKey];
+      } else {
+        studentGrade[courseKey]['max'][assignmentKey] = newMaxSetting;
+      }
+    }
+  });
+}
 const refreshRow = async (courseKey, assignmentKey, studentRow) => {
   let student_info = $('td', studentRow);
   //console.log(student_info);
@@ -132,11 +169,11 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
     }
     const studentName = getStudentName(studentNameFullText);
     const studentId = getStudentId(studentNameFullText);
-    const testingScore = Number(student_info.eq(4).text());
-    const toolChecks = Number(student_info.eq(5).text());
+    const testingScore = Number(student_info.eq(4).text()) || 0;
+    const toolChecks = Number(student_info.eq(5).text()) || 0;
     const staffScore = Number(student_info.eq(6).text());
-    const latePenalties = Number(student_info.eq(7).text());
-    const assignmentScore = Number(student_info.eq(8).text());
+    const latePenalties = Number(student_info.eq(7).text()) || 0;
+    const assignmentScore = Number(student_info.eq(8).text()) || 0;
     const inSection = isStudentInSection(studentName);
     const [ inSelectedSections, sectionNames ] = getSection(studentId);
     const classAttribute = `${(lock) ? "locked " : "unlock "}${(inSection) ? "inSection" : "outSection"}`;
@@ -170,10 +207,10 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
         graded = !isNaN(staffScore);
       }
       let newMaxSetting = studentGrade[courseKey]['max'][assignmentKey];
-      newMaxSetting['maxAssignmentScore'] = Math.max(Number(newMaxSetting['maxAssignmentScore']), Number(assignmentScore));
-      newMaxSetting['maxTestingScore'] = Math.max(Number(newMaxSetting['maxTestingScore']), Number(testingScore));
-      newMaxSetting['maxToolChecks'] = Math.max(Number(newMaxSetting['maxToolChecks']), Number(toolChecks));
-      newMaxSetting['maxStaffScore'] = Math.max(Number(newMaxSetting['maxStaffScore']), Number(newMaxSetting['maxAssignmentScore'] - newMaxSetting['maxTestingScore'] - newMaxSetting['maxToolChecks']));
+      newMaxSetting['maxTestingScore'] = Math.max(newMaxSetting['maxTestingScore'], testingScore);
+      newMaxSetting['maxToolChecks'] = Math.max(newMaxSetting['maxToolChecks'], toolChecks);
+      newMaxSetting['maxStaffScore'] = Math.max(newMaxSetting['maxStaffScore'], newMaxSetting['maxAssignmentScore'] - newMaxSetting['maxTestingScore'] - newMaxSetting['maxToolChecks']);
+      newMaxSetting['maxAssignmentScore'] = Math.max(newMaxSetting['maxAssignmentScore'], assignmentScore);
       studentGrade[courseKey]['max'][assignmentKey] = newMaxSetting;
       studentGrade[courseKey][studentId][assignmentKey] = {
         'graded': graded,
