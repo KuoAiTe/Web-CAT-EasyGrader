@@ -252,7 +252,7 @@ const getSection = (courseKey, studentName, studentId) => {
       if ('Groups' in studentGrade[courseKey][studentId]) {
         groups = studentGrade[courseKey][studentId]['Groups'].join(" | ");
       }
-      const output = `${section}-${groups}`;
+      const output = (groups.length == 0)? section: `${section}-${groups}`;
       for (section of selectedSection) {
         const sectionMatches = section.match(/(\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4})-?(.+)?/i);
         if (sectionMatches != undefined) {

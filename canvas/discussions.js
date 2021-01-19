@@ -38,44 +38,39 @@ const reloadDiscussionBoard = async () => {
         if (articleAuthorId in studentDict) {
           const articleLoginId = studentDict[articleAuthorId];
           const authorTitleText = $(authorTitle).html().trim();
-          const sectionSet = [];
+          let sectionName = '';
           if (courseKey in studentGrade) {
             if (articleLoginId in studentGrade[courseKey]) {
+              let studentSection = '';
+              if ('Section' in studentGrade[courseKey][articleLoginId]) {
+                studentSection = studentGrade[courseKey][articleLoginId]['Section'];
+              }
+              let studentGroups = '';
+              let studentGroups2 = '';
+              if ('Groups' in studentGrade[courseKey][articleLoginId]) {
+                studentGroups = studentGrade[courseKey][articleLoginId]['Groups'].join(" | ");
+              }
+              sectionName = (studentGroups.length == 0) ? studentSection : `${studentSection}<br>${studentGroups}`;
               selectedSection.forEach( section => {
                 const sectionMatches = section.match(/(\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4})-?(.+)?/i);
                 if (sectionMatches != undefined) {
                   const selectedSection = sectionMatches[1];
                   const selectedGroups = sectionMatches[2];
                   let output = '';
-                  let studentSection = '';
-                  if ('Section' in studentGrade[courseKey][articleLoginId]) {
-                    studentSection = studentGrade[courseKey][articleLoginId]['Section'];
-                  }
-                  let studentGroups = '';
-                  if ('Groups' in studentGrade[courseKey][articleLoginId]) {
-                    studentGroups = studentGrade[courseKey][articleLoginId]['Groups'].join(" | ");
-                  }
-                  if (selectedGroups == undefined) {
-                    if (selectedSection == studentSection) {
+                  if (selectedSection == studentSection) {
+                    if (selectedGroups == undefined) {
                       inSection = true;
-                      output = `${studentSection}-${studentGroups}`;
-                      sectionSet.push(output);
-                    }
-                  } else {
-                    if (selectedSection == studentSection && selectedGroups == studentGroups) {
+                    } else if (selectedGroups == studentGroups) {
                       inSection = true;
-                      output = `${studentSection}-${studentGroups}`;
-                      sectionSet.push(output);
                     }
                   }
                 }
               });
               if (selectedSection.length == 0 || inSection) {
                 showReply = true;
-                sectionSet.forEach(function(sectionName){
-                  if (authorTitleText.indexOf(sectionName) == -1)
-                    $(authorTitle).append("<br/>" + sectionName);
-                });
+                if (authorTitleText.indexOf(sectionName) == -1){
+                  $(authorTitle).append("<br/>" + sectionName);
+                }
                 showReply = !(showNoReplyPost && replyCount != 0);
               } else {
                 showReply = false;
