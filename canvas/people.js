@@ -25,7 +25,7 @@ const listenRosterChanges = () => {
   const currentRosterSize = roster.length;
   if (lastRosterSize == currentRosterSize) return;
   const rosterHead = $(' > thead > tr > th', rosterTable);
-  const infoIndex = {'Role': -1, 'Login ID': -1, 'count': 0}
+  const infoIndex = {'Name':-1, 'Role': -1, 'Login ID': -1, 'count': 0}
   rosterHead.each(function(index) {
     const title = $(this).text().trim();
     if (title in infoIndex) {
@@ -33,8 +33,26 @@ const listenRosterChanges = () => {
       infoIndex['count'] += 1;
     }
   });
-  if (infoIndex['count'] != 2) return;
+  if (infoIndex['count'] != 3) return;
+  const courseKey = getCourseKey(document.title);
+  if (!(courseKey in studentGrade)) {
+    studentGrade[courseKey] = {};
+  }
+  const url = window.location.href;
+  const urlMatch = url.match(/(?:(?:http|https):\/\/)?auburn.instructure.com\/courses\/(\d+)\/users/i);
+  if (urlMatch != null && urlMatch[1] != undefined) {
+    const courseId = urlMatch[1];
+    courseMap[courseId] = courseKey;
+  }
+
+  const courseInfo = studentGrade[courseKey];
+  if (!('Tokens' in courseInfo)) {
+    courseInfo['Tokens'] = {};
+  }
+  const nameDict = courseInfo['Tokens'];
   roster.each(function(index) {
+    // remove personal pronouns
+    const nameTokens = $(this).find('td:eq(' + infoIndex['Name'] + ')').text().replace(REGEX.STUDENT_PRONOUNS, '').trim().split(" ");
     const loginId = $(this).find('td:eq(' + infoIndex['Login ID'] + ')').text().trim();
     const userId = $(this).attr('id').replace(/\D/g,'');
     const sections = $(this).find('td[data-test-id="section-column-cell"] > div.section');
@@ -42,26 +60,31 @@ const listenRosterChanges = () => {
     if (role != 'Student') return;
     sections.each(function(sectionIndex) {
       const section = $(this).text().trim();
-      const courseKey = getCourseKey(section);
-      if (courseKey !== undefined ) {
-        courseSection.add(courseKey);
+      const courseSectionKey = getCourseKey(section);
+      if (courseSectionKey !== undefined ) {
+        courseSection.add(courseSectionKey);
         if (!(userId in studentDict)) {
-          studentDict[userId] = {};
-          studentDict[userId][courseKey] = {};
+          studentDict[userId] = loginId;
         }
-        if (userId.length > 0 && loginId.length > 0) {
-          studentGrade[userId] = loginId;
+        if (!(loginId in courseInfo)) {
+          courseInfo[loginId] = {};
         }
-        if (!(loginId in studentDict)) {
-          studentDict[loginId] = {};
-          studentDict[loginId][courseKey] = {};
-        }
+        courseInfo[loginId]['Section'] = courseSectionKey;
+        nameTokens.forEach(function(token){
+          if (!(token in nameDict)) {
+            nameDict[token] = [];
+          }
+          if (!nameDict[token].includes(loginId)) {
+            nameDict[token].push(loginId);
+          }
+        });
       }
     });
   });
   chrome.storage.local.set({
     studentDict: studentDict,
     studentGrade: studentGrade,
+    courseMap: courseMap,
   }, function() {
     lastRosterSize = currentRosterSize;
   });

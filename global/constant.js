@@ -14,6 +14,7 @@ var autoSaveGrade = false;
 var lineNumber;
 var selectedSection = [];
 var studentDict = {};
+var courseMap = {};
 var studentGrade = {};
 var courseSection = new Set();
 var lastStatus = '';
@@ -27,6 +28,7 @@ const BG_TYPE = {
 const URL_PATTERN = {
   CANVAS_GRADEBOOK: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/gradebook/i,
   CANVAS_PEOPLE: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/users/i,
+  CANVAS_PEOPLE_GROUPS: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/groups/i,
   CANVAS_DISCUSSIONS: /((http|https):\/\/)?auburn.instructure.com\/courses\/\d+\/discussion_topics\/\d+/i,
   WEBCAT: /((http|https):\/\/)?webcat.eng.auburn.edu:8443/i
 };
@@ -34,6 +36,7 @@ const REGEX = {
   START_WITH_SPACES: /^(&nbsp;)+/,
   STUDENT_ID: /([a-zA-Z]{3,4}[0-9]{3,5})/,
   STUDENT_NAME_AND_ID: /[^\(\)]+(?: \(([a-zA-z0-9]{7,10})\))?/g,
+  STUDENT_PRONOUNS: /(\(She\/Her\/Hers\)|\(He\/Him\/His\)|\(They\/Them\/Theirs?\))/i,
 };
 var gradebookListenerBuilt = false;
 var webcatListenerBuilt = false;

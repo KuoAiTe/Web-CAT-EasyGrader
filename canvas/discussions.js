@@ -23,27 +23,64 @@ const checkDiscussionBoardStatus = () => new Promise((resolve, reject) => {
 
 const reloadDiscussionBoard = async () => {
   const discussionBoard = $('ul.discussion-entries:eq(0)');
+  const courseKey = getCourseKey(document.title);
   if (discussionBoard.length) {
     const discussionEntries = $(' > li.entry', discussionBoard);
     discussionEntries.each(function(index) {
       const authorTitle = $(' > article > div.entry-content > header .discussion-title > a', this);
       const replyCount = $(' > div.replies > ul.discussion-entries > li', this).length;
       const articleAuthorId = $(authorTitle).attr('data-student_id');
-      const authorTitleText = $(authorTitle).html().trim();
+      const courseId = $(authorTitle).attr('data-course_id');
       let showReply = (selectedSection.length == 0);
-      if (articleAuthorId !== undefined) {
+      let inSection = false;
+      if (courseId in courseMap) {
+        const courseKey = courseMap[courseId];
         if (articleAuthorId in studentDict) {
-          let inSection = false;
-          selectedSection.forEach( section => inSection |= (section in studentDict[articleAuthorId]));
-          if (selectedSection.length == 0 || inSection) {
-            showReply = true;
-            for (const sectionName in studentDict[articleAuthorId]) {
-              if (authorTitleText.indexOf(sectionName) == -1)
-                $(authorTitle).append("<br/>" + sectionName);
+          const articleLoginId = studentDict[articleAuthorId];
+          const authorTitleText = $(authorTitle).html().trim();
+          const sectionSet = [];
+          if (courseKey in studentGrade) {
+            if (articleLoginId in studentGrade[courseKey]) {
+              selectedSection.forEach( section => {
+                const sectionMatches = section.match(/(\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4})-?(.+)?/i);
+                if (sectionMatches != undefined) {
+                  const selectedSection = sectionMatches[1];
+                  const selectedGroups = sectionMatches[2];
+                  let output = '';
+                  let studentSection = '';
+                  if ('Section' in studentGrade[courseKey][articleLoginId]) {
+                    studentSection = studentGrade[courseKey][articleLoginId]['Section'];
+                  }
+                  let studentGroups = '';
+                  if ('Groups' in studentGrade[courseKey][articleLoginId]) {
+                    studentGroups = studentGrade[courseKey][articleLoginId]['Groups'].join(" | ");
+                  }
+                  if (selectedGroups == undefined) {
+                    if (selectedSection == studentSection) {
+                      inSection = true;
+                      output = `${studentSection}-${studentGroups}`;
+                      sectionSet.push(output);
+                    }
+                  } else {
+                    if (selectedSection == studentSection && selectedGroups == studentGroups) {
+                      inSection = true;
+                      output = `${studentSection}-${studentGroups}`;
+                      sectionSet.push(output);
+                    }
+                  }
+                }
+              });
+              if (selectedSection.length == 0 || inSection) {
+                showReply = true;
+                sectionSet.forEach(function(sectionName){
+                  if (authorTitleText.indexOf(sectionName) == -1)
+                    $(authorTitle).append("<br/>" + sectionName);
+                });
+                showReply = !(showNoReplyPost && replyCount != 0);
+              } else {
+                showReply = false;
+              }
             }
-            showReply = !(showNoReplyPost && replyCount != 0);
-          } else {
-            showReply = false;
           }
         }
       }

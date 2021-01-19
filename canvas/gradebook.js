@@ -149,17 +149,21 @@ const refreshSlickCell = async (target, courseKey) => {
   if (assignmentId in hash) {
     const courseData = studentGrade[courseKey];
     let bgtype = BG_TYPE.NONE;
-    if (studentId in studentGrade) {
-      const userId = studentGrade[studentId];
-      if (userId in courseData) {
-        const studentData = courseData[userId];
+    if (studentId in studentDict) {
+      const loginId = studentDict[studentId];
+      if (loginId in courseData) {
+        const studentData = courseData[loginId];
         const assignmentKey = hash[assignmentId];
-        const settingInfo = courseData['max'][assignmentKey];
-        if (assignmentKey in studentData) {
-          const webcatGradeInfo = studentData[assignmentKey];
-          bgtype = correctGradeHandler(msgbox, canvasGrade, webcatGradeInfo, settingInfo)
-        } else {
-          bgtype = errorGradeHandler(msgbox, canvasGrade, GRADE_MSG.GRADE_NOT_FETCHED_RED, GRADE_MSG.GRADE_NOT_FETCHED_GREEN);
+        if ('max' in courseData) {
+          if (assignmentKey in courseData['max']) {
+            const settingInfo = courseData['max'][assignmentKey];
+            if (assignmentKey in studentData) {
+              const webcatGradeInfo = studentData[assignmentKey];
+              bgtype = correctGradeHandler(msgbox, canvasGrade, webcatGradeInfo, settingInfo)
+            } else {
+              bgtype = errorGradeHandler(msgbox, canvasGrade, GRADE_MSG.GRADE_NOT_FETCHED_RED, GRADE_MSG.GRADE_NOT_FETCHED_GREEN);
+            }
+          }
         }
       } else {
         bgtype = errorGradeHandler(msgbox, canvasGrade, GRADE_MSG.USER_NOT_FOUND_RED, GRADE_MSG.USER_NOT_FOUND_GREEN);

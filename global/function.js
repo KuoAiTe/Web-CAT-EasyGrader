@@ -57,6 +57,13 @@ function timeout(ms) {
 }
 
 
+/**
+ * Given a title, return the course key
+ * ... (COMP-1210-001-Fall-2020) ... -> COMP-1210-001-Fall-2020
+ * ... (COMP-1210-002-Spring-2021) ... -> COMP-1210-002-Spring-2021
+ * ... (COMP-1210-Fall-2020) ... -> undefined
+ * @return the right side
+ */
 function getCourseKey(str) {
     const courseName = str.match(/\w+-\d+-\w+/i);
     const courseYearMatch = str.match(/(Fall|Spring|Summer) (\d{4})/i);
@@ -64,8 +71,8 @@ function getCourseKey(str) {
     if (courseName != undefined && courseYearMatch != undefined) {
       courseKey = `${courseName}-${courseYearMatch[1]}-${courseYearMatch[2]}`;
     }
-
     if (courseKey == undefined) {
+      // Example: Submissions for COMP 1213 (COMP-1213-Spring-2021) M01 Activity 01 (max 10 submits) -> COMP-1213-001-Fall-2021
       const courseKeyMatch = str.match(/\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4}/i);
       if (courseKeyMatch != undefined) {
         courseKey = courseKeyMatch[0];
@@ -117,4 +124,40 @@ function getAssignmentUniqueKey(assignmentName){
     }
   }
   return undefined;
+}
+
+function findStudentIdByNameTokens(courseKey, nameTokens) {
+  if (!(courseKey in studentGrade)) return undefined;
+  const courseInfo = studentGrade[courseKey];
+  if (!('Tokens' in courseInfo)) return undefined;
+  const nameDict = courseInfo['Tokens'];
+  const potentialSet = {};
+  nameTokens.forEach(function(token, i){
+    if (token in nameDict) {
+      nameDict[token].forEach(function(loginId){
+        if (!(loginId in potentialSet)) {
+          potentialSet[loginId] = 0;
+        }
+        potentialSet[loginId] += 1;
+      });
+    }
+  });
+  var keyValues = [];
+  for (var key in potentialSet) {
+    keyValues.push([key, potentialSet[key] ])
+  }
+  keyValues.sort(function compare(kv1, kv2) {
+    return kv2[1] - kv1[1];
+  });
+  let candidateIdx = [];
+  if (keyValues.length > 0) {
+    keyValues.forEach(function(item){
+      const key = item[0];
+      const value = item[1];
+      if (value == nameTokens.length) {
+        candidateIdx.push([key, value]);
+      }
+    });
+  }
+  return candidateIdx;
 }

@@ -105,7 +105,6 @@ const refreshTable = async () => {
       studentList.each(function() {
         refreshRow(courseKey, assignmentKey, $(this));
       });
-      //console.log(  studentGrade[courseKey]['max'][assignmentKey]);
       isDone = true;
       lastStatus = currentStatus;
     }
@@ -113,6 +112,7 @@ const refreshTable = async () => {
   return isDone;
 }
 const getMaximumScoreFromStaff = (courseKey, assignmentKey) => {
+  if (!(courseKey in studentGrade)) return;
   const staffs = $('tbody.top > tr');
   staffs.each(function() {
     const columns = $(' > td', $(this));
@@ -122,11 +122,9 @@ const getMaximumScoreFromStaff = (courseKey, assignmentKey) => {
       const staffScore = parseInt(columns.eq(5).text()) || 0;
       const totalScore = parseInt(columns.eq(6).text()) || 0;
       const toolChecks = totalScore - testingScore - staffScore;
-
       if (!('max' in studentGrade[courseKey])) {
-        studentGrade[courseKey]['max'] = {}
+        studentGrade[courseKey]['max'] = {};
       }
-
       if (!(assignmentKey in studentGrade[courseKey]['max'])) {
         studentGrade[courseKey]['max'][assignmentKey] = {
           'maxTestingScore': 0.0,
@@ -150,8 +148,6 @@ const getMaximumScoreFromStaff = (courseKey, assignmentKey) => {
 }
 const refreshRow = async (courseKey, assignmentKey, studentRow) => {
   let student_info = $('td', studentRow);
-  //console.log(student_info);
-  //console.log(student_info.length);
   if (student_info && student_info.length > 1) {
     const studetNameDOM = student_info.eq(1);
     studetNameDOM.removeClass('locked unlock inSection outSection');
@@ -175,7 +171,7 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
     const latePenalties = Number(student_info.eq(7).text()) || 0;
     const assignmentScore = Number(student_info.eq(8).text()) || 0;
     const inSection = isStudentInSection(studentName);
-    const [ inSelectedSections, sectionNames ] = getSection(studentId);
+    const [ inSelectedSections, sectionNames ] = getSection(courseKey, studentName, studentId);
     const classAttribute = `${(lock) ? "locked " : "unlock "}${(inSection) ? "inSection" : "outSection"}`;
     studetNameDOM.addClass(classAttribute);
     showSection(studentId, sectionNames, studetNameDOM, sectionDOM, classAttribute);
@@ -223,20 +219,59 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
     }
   }
 }
-const getSection = (studentId) => {
+const getSection = (courseKey, studentName, studentId) => {
+  if (!(courseKey in studentGrade)) return;
   const sectionSet = [];
+  const potentialSectionSet = {};
   let inSelectedSections = false;
-  if (studentId in studentDict) {
-    for (const [key, value] of Object.entries(studentDict[studentId])) {
-      sectionSet.push(key);
-      for (section of selectedSection) {
-        if (section == key) {
-          inSelectedSections = true;
+  let studentIdx = [];
+  if (studentId.length == 0) {
+    const nameTokens = studentName.replace(',', '').trim().split(" ");
+    const candidateIdx = findStudentIdByNameTokens(courseKey, nameTokens);
+    if (candidateIdx != undefined) {
+      candidateIdx.forEach(function(item){
+        const loginId = item[0];
+        studentIdx.push(loginId);
+      });
+    }
+  } else {
+    studentIdx.push(studentId);
+  }
+  if (selectedSection.length == 0) inSelectedSections = true;
+  studentIdx.forEach(function(studentId) {
+    if (studentId in studentGrade[courseKey]) {
+      let section = '';
+      if ('Section' in studentGrade[courseKey][studentId]) {
+        fullSectionKey = studentGrade[courseKey][studentId]['Section'];
+        const sectionMatches = fullSectionKey.match(/\w+-\d+-(\w+)-(?:Fall|Spring|Summer)-\d{4}/i);
+        if (sectionMatches.length == 2) {
+          section = sectionMatches[1];
         }
       }
+      let groups = '';
+      if ('Groups' in studentGrade[courseKey][studentId]) {
+        groups = studentGrade[courseKey][studentId]['Groups'].join(" | ");
+      }
+      const output = `${section}-${groups}`;
+      for (section of selectedSection) {
+        const sectionMatches = section.match(/(\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4})-?(.+)?/i);
+        if (sectionMatches != undefined) {
+          if (sectionMatches[2] == undefined) {
+            if (sectionMatches[1] == fullSectionKey) {
+              inSelectedSections = true;
+            }
+          } else {
+            if (sectionMatches[1] == fullSectionKey && sectionMatches[2] == groups) {
+              inSelectedSections = true;
+            }
+          }
+        }
+      }
+      sectionSet.push(output);
     }
-  }
-  return [inSelectedSections, sectionSet.join(' ')];
+  });
+  //console.log(potentialSectionSet);
+  return [inSelectedSections, sectionSet.join(' | ')];
 }
 const showSection = (studentId, sectionNames, studetNameDOM, sectionDOM, classAttribute) => {
   if (showSectionName && sectionNames.length > 0) {
@@ -245,8 +280,7 @@ const showSection = (studentId, sectionNames, studetNameDOM, sectionDOM, classAt
     } else {
       const html = studetNameDOM.html();
       var match = html.match(REGEX.STUDENT_NAME_AND_ID);
-      var firstIndex = html.indexOf(match[0]);
-      var lastIndex  = html.lastIndexOf(match[match.length-1]);
+      let lastIndex  = html.lastIndexOf(match[match.length - 1]) + match[match.length - 1].length;
       const newhtml = html.substring(0, lastIndex) + `<span class='section'> - ${sectionNames}</span>` +  html.substring(lastIndex);
       studetNameDOM.html(newhtml);
     }
@@ -266,7 +300,6 @@ const toggleStudent = (student) => {
   const studentName = getStudentName(studentNameFullText);
   const studentId = getStudentId(studentNameFullText);
   const inSection = isStudentInSection(studentName);
-  //console.log(studentName + " " + studentId);
   const lockAttribute = (lock) ? "locked " : "unlock ";
   const classAttribute = (inSection) ? "outSection" : "inSection";
   (inSection) ? studentInSection.delete(studentName): studentInSection.add(studentName);

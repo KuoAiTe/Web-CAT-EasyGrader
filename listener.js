@@ -2,9 +2,11 @@ $(document).ready(function() {
   chrome.storage.local.get({
     studentDict: {},
     studentGrade: {},
+    courseMap: {},
   }, function(items) {
     studentDict = items.studentDict;
     studentGrade = items.studentGrade;
+    courseMap = items.courseMap;
     //console.log(studentDict);
     //console.log(studentGrade);
   });
@@ -33,6 +35,7 @@ $(document).ready(function() {
     selectedSection = items.selectedSection;
     items.courseSection.reduce((s, e) => s.add(e), courseSection);
     studentRosterListener();
+    studentGroupListener();
     reloadDiscussionBoardListener();
     gradeBookListener();
     webcatListener();

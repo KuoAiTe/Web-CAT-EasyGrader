@@ -30,15 +30,27 @@ $( document ).ready(function() {
       let onlyShowTextInRed = items.onlyShowTextInRed;
       let autoSaveGrade = items.autoSaveGrade;
       items.courseSection.reduce((s, e) => s.add(e), courseSection);
-      let sectionCountDict = {}
-      for (let key in studentDict) {
-        if (!key.match(REGEX.STUDENT_ID)) continue;
-        const sections = studentDict[key];
-        for (section in sections) {
-          if (!(section in sectionCountDict)) {
-            sectionCountDict[section] = 0;
+      let sectionCountDict = {};
+      for (const courseKey in studentGrade) {
+        for (const loginId in studentGrade[courseKey]) {
+          if (!loginId.match(REGEX.STUDENT_ID)) continue;
+          let studentSection = '';
+          let studentGroups = '';
+          if ('Section' in studentGrade[courseKey][loginId]) {
+            studentSection = studentGrade[courseKey][loginId]['Section'];
           }
-          sectionCountDict[section] += 1;
+          if ('Groups' in studentGrade[courseKey][loginId]) {
+            studentGroups = studentGrade[courseKey][loginId]['Groups'].join(" | ");
+          }
+          const output = `${studentSection}-${studentGroups}`;
+          if (!(studentSection in sectionCountDict)) {
+            sectionCountDict[studentSection] = 0;
+          }
+          if (!(output in sectionCountDict)) {
+            sectionCountDict[output] = 0;
+          }
+          sectionCountDict[studentSection] += 1;
+          sectionCountDict[output] += 1;
         }
       }
       courseSection = Array.from(courseSection).sort();
