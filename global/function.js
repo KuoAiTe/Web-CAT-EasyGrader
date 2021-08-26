@@ -38,7 +38,7 @@ function isStudentInSectionByIdOrName(studentName, studentId) {
 function getStudentName(tdStudentName) {
   tdStudentName = tdStudentName.trim();
   const studentName = tdStudentName.match(REGEX.STUDENT_NAME_AND_ID);
-  if (studentName.length > 0)
+  if (studentName && studentName.length > 0)
     return studentName[0].trim();
   else
     return tdStudentName;
@@ -47,7 +47,7 @@ function getStudentName(tdStudentName) {
 function getStudentId(tdStudentName) {
  tdStudentName = tdStudentName.trim();
   const studentName = tdStudentName.match(REGEX.STUDENT_NAME_AND_ID);
-  if (studentName.length > 1)
+  if (studentName && studentName.length > 1)
     return studentName[1].trim();
   else
     return "";

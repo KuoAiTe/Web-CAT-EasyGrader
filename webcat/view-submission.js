@@ -151,15 +151,15 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
   if (student_info && student_info.length > 1) {
     const studetNameDOM = student_info.eq(1);
     studetNameDOM.removeClass('locked unlock inSection outSection');
-    const sectionDOM = $('span.section', studetNameDOM);
+    const sectionDOM = $('kbd.webcat', studetNameDOM);
     if (disable) {
       studentRow.show();
       sectionDOM.hide();
       return ;
     }
 
-    let studentNameFullText = studetNameDOM.text();
-    const splitPoint = studentNameFullText.indexOf(" -");
+    let studentNameFullText = $(studetNameDOM).html();
+    const splitPoint = studentNameFullText.indexOf("<kbd ");
     if (splitPoint != -1) {
       studentNameFullText = studentNameFullText.substring(0, splitPoint);
     }
@@ -172,6 +172,7 @@ const refreshRow = async (courseKey, assignmentKey, studentRow) => {
     const assignmentScore = Number(student_info.eq(8).text()) || 0;
     const inSection = isStudentInSection(studentName);
     const [ inSelectedSections, sectionNames ] = getSection(courseKey, studentName, studentId);
+    console.log(`studentName: ${studentName} inSection: ${inSection}`);
     const classAttribute = `${(lock) ? "locked " : "unlock "}${(inSection) ? "inSection" : "outSection"}`;
     studetNameDOM.addClass(classAttribute);
     showSection(studentId, sectionNames, studetNameDOM, sectionDOM, classAttribute);
@@ -237,7 +238,6 @@ const getSection = (courseKey, studentName, studentId) => {
   } else {
     studentIdx.push(studentId);
   }
-  if (selectedSection.length == 0) inSelectedSections = true;
   studentIdx.forEach(function(studentId) {
     if (studentId in studentGrade[courseKey]) {
       let section = '';
@@ -281,7 +281,7 @@ const showSection = (studentId, sectionNames, studetNameDOM, sectionDOM, classAt
       const html = studetNameDOM.html();
       var match = html.match(REGEX.STUDENT_NAME_AND_ID);
       let lastIndex  = html.lastIndexOf(match[match.length - 1]) + match[match.length - 1].length;
-      const newhtml = html.substring(0, lastIndex) + `<span class='section'> - ${sectionNames}</span>` +  html.substring(lastIndex);
+      const newhtml = html.substring(0, lastIndex) + `<kbd class='webcat'>${sectionNames}</kbd>` +  html.substring(lastIndex);
       studetNameDOM.html(newhtml);
     }
   } else {
@@ -296,7 +296,11 @@ const showSection = (studentId, sectionNames, studetNameDOM, sectionDOM, classAt
  */
 const toggleStudent = (student) => {
   if (lock || disable) return;
-  const studentNameFullText = student[0].innerText;
+  let studentNameFullText = student[0].innerHTML;
+  const splitPoint = studentNameFullText.indexOf("<kbd ");
+  if (splitPoint != -1) {
+    studentNameFullText = studentNameFullText.substring(0, splitPoint);
+  }
   const studentName = getStudentName(studentNameFullText);
   const studentId = getStudentId(studentNameFullText);
   const inSection = isStudentInSection(studentName);

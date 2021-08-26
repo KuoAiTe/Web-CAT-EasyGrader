@@ -50,7 +50,7 @@ const reloadDiscussionBoard = async () => {
               if ('Groups' in studentGrade[courseKey][articleLoginId]) {
                 studentGroups = studentGrade[courseKey][articleLoginId]['Groups'].join(" | ");
               }
-              sectionName = (studentGroups.length == 0) ? studentSection : `${studentSection}<br>${studentGroups}`;
+              sectionName = (studentGroups.length == 0) ? studentSection : `<br><kbd class="section">${studentSection}</kbd><br><kbd class="section">${studentGroups}</kbd>`;
               selectedSection.forEach( section => {
                 const sectionMatches = section.match(/(\w+-\d+-\w+-(?:Fall|Spring|Summer)-\d{4})-?(.+)?/i);
                 if (sectionMatches != undefined) {
@@ -69,7 +69,7 @@ const reloadDiscussionBoard = async () => {
               if (selectedSection.length == 0 || inSection) {
                 showReply = true;
                 if (authorTitleText.indexOf(sectionName) == -1){
-                  $(authorTitle).append("<br/>" + sectionName);
+                  $(authorTitle).append(sectionName);
                 }
                 showReply = !(showNoReplyPost && replyCount != 0);
               } else {

@@ -5,6 +5,7 @@ const hideLineNumbers = async () => {
   do {
     iframeContent = $('iframe').contents();
     lineNumbers = $('td.lineCount', iframeContent);
+    highlightLineNumbers = $('td.lineCountHilight', iframeContent);
     await timeout(50);
   } while (lineNumbers.length == 0 && attempts++ < 100);
   // Remove indentation
@@ -12,13 +13,20 @@ const hideLineNumbers = async () => {
     const newContent = $(this).html().replace(REGEX.START_WITH_SPACES, '');
     $(this).html(newContent);
   });
+
+  highlightLineNumbers.each( function() {
+    const newContent = $(this).html().replace(REGEX.START_WITH_SPACES, '');
+    $(this).html(newContent);
+  });
   const target = $('tr[id^=N]', iframeContent);
   if (lineNumber) {
     $('tr', iframeContent).removeClass('Warning Error');
     lineNumbers.hide();
+    highlightLineNumbers.hide();
     target.hide();
   } else {
     lineNumbers.show();
+    highlightLineNumbers.show();
     target.show();
   }
 }
