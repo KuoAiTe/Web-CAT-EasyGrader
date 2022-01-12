@@ -270,7 +270,6 @@ const getSection = (courseKey, studentName, studentId) => {
       sectionSet.push(output);
     }
   });
-  //console.log(potentialSectionSet);
   return [inSelectedSections, sectionSet.join(' | ')];
 }
 const showSection = (studentId, sectionNames, studetNameDOM, sectionDOM, classAttribute) => {

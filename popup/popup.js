@@ -51,8 +51,11 @@ $( document ).ready(function() {
           }
           sectionCountDict[studentSection] += 1;
           sectionCountDict[output] += 1;
+          console.log(`sutdnetSection : ${loginId} ${sectionCountDict[studentSection]}`);
+          console.log(`output: ${output} ${sectionCountDict[output]}`);
         }
       }
+      console.log(studentGrade);
       courseSection = Array.from(courseSection).sort();
       courseSection.forEach(function (value1,value2,set) {
         let studentCount = 0;

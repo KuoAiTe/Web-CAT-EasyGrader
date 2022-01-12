@@ -125,6 +125,7 @@ const showStudentsWithInconsistentGrades = async () => {
   }
 }
 const refreshAllCell = async () => {
+  console.log("heello");
   if (autoSaveGrade) {
     const courseKey = getCourseKey(document.title);
     if(!(courseKey in studentGrade)) return;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Web-CAT Easy Grader",
-  "version": "0.96",
+  "version": "0.97",
   "description": "Drastically reduce your grading time in Web-CAT :)",
   "icons": {
     "16": "icon_16.png",
@@ -21,6 +21,8 @@
     {
       "matches": [
         "https://webcat.eng.auburn.edu:8443/Web-CAT/*",
+        "https://webcat2.eng.auburn.edu:8443/Web-CAT/*",
+        "https://*.eng.auburn.edu:8443/Web-CAT/*",
         "https://auburn.instructure.com/*"
       ],
       "js": [
