@@ -1,7 +1,6 @@
 const studentRosterListener = async () => {
   const url = window.location.href;
   const urlPattern = URL_PATTERN.CANVAS_PEOPLE;
-  console.log(url.match(urlPattern))
   if (url.match(urlPattern) === null) return;
   registerStudentRosterListener();
 }
@@ -24,7 +23,6 @@ const listenRosterChanges = () => {
   const rosterTable = $('table.roster');
   const roster = $(' > tbody > tr', rosterTable);
   const currentRosterSize = roster.length;
-  console.log("rosterTable")
   if (lastRosterSize == currentRosterSize) return;
   const rosterHead = $(' > thead > tr > th', rosterTable);
   const infoIndex = {'Name':-1, 'Role': -1, 'Login ID': -1, 'count': 0}
@@ -66,14 +64,11 @@ const listenRosterChanges = () => {
     sections.each(function(sectionIndex) {
       const section = $(this).text().trim();
       const courseSectionKey = getCourseKey(section);
-      console.log('courseSectionKey', courseSectionKey)
       if (courseSectionKey !== undefined ) {
         courseSection.add(courseSectionKey);
         if (!(userId in studentDict)) {
           studentDict[userId] = loginId;
         }
-        console.log('studentDict', studentDict)
-        console.log('courseInfo', courseInfo)
         if (!(loginId in courseInfo)) {
           courseInfo[loginId] = {};
         }
@@ -87,7 +82,6 @@ const listenRosterChanges = () => {
           }
         });
       }
-      console.log(courseSection)
     });
   });
   chrome.storage.local.set({
