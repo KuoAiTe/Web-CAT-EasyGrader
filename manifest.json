@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Web-CAT Easy Grader",
-  "version": "0.97",
+  "version": "0.98",
   "description": "Drastically reduce your grading time in Web-CAT :)",
   "icons": {
     "16": "icon_16.png",
@@ -10,7 +10,7 @@
     "128": "icon_128.png"
   },
   "author": "Ai-Te Kuo",
-  "browser_action": {
+  "action": {
     "default_popup": "popup/popup.html"
   },
   "permissions": [
