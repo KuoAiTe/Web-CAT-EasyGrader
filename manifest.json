@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Web-CAT Easy Grader",
   "version": "0.97",
   "description": "Drastically reduce your grading time in Web-CAT :)",
