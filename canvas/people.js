@@ -1,6 +1,7 @@
 const studentRosterListener = async () => {
   const url = window.location.href;
   const urlPattern = URL_PATTERN.CANVAS_PEOPLE;
+  console.log(url.match(urlPattern))
   if (url.match(urlPattern) === null) return;
   registerStudentRosterListener();
 }
@@ -23,6 +24,7 @@ const listenRosterChanges = () => {
   const rosterTable = $('table.roster');
   const roster = $(' > tbody > tr', rosterTable);
   const currentRosterSize = roster.length;
+  console.log("rosterTable")
   if (lastRosterSize == currentRosterSize) return;
   const rosterHead = $(' > thead > tr > th', rosterTable);
   const infoIndex = {'Name':-1, 'Role': -1, 'Login ID': -1, 'count': 0}
@@ -55,17 +57,23 @@ const listenRosterChanges = () => {
     const nameTokens = $(this).find('td:eq(' + infoIndex['Name'] + ')').text().replace(REGEX.STUDENT_PRONOUNS, '').trim().split(" ");
     const loginId = $(this).find('td:eq(' + infoIndex['Login ID'] + ')').text().trim();
     const userId = $(this).attr('id').replace(/\D/g,'');
-    const sections = $(this).find('td[data-test-id="section-column-cell"] > div.section');
+    let sections = $(this).find('td[data-testid="section-column-cell"] > div.section');
     const role = $(this).find('td:eq(' + infoIndex['Role'] + ')').text().trim();
+    if (sections.length == 0) {
+      sections = $(this).find('td > div.section');
+    }
     if (role != 'Student') return;
     sections.each(function(sectionIndex) {
       const section = $(this).text().trim();
       const courseSectionKey = getCourseKey(section);
+      console.log('courseSectionKey', courseSectionKey)
       if (courseSectionKey !== undefined ) {
         courseSection.add(courseSectionKey);
         if (!(userId in studentDict)) {
           studentDict[userId] = loginId;
         }
+        console.log('studentDict', studentDict)
+        console.log('courseInfo', courseInfo)
         if (!(loginId in courseInfo)) {
           courseInfo[loginId] = {};
         }
@@ -79,6 +87,7 @@ const listenRosterChanges = () => {
           }
         });
       }
+      console.log(courseSection)
     });
   });
   chrome.storage.local.set({
